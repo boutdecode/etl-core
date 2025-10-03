@@ -1,0 +1,3 @@
+imports:
+    - { resource: "packages/messenger.yaml" }
+    - { resource: "packages/workflow.yaml" }

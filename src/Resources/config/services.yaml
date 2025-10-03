@@ -1,0 +1,113 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    # -------------------------------------------------------------------------
+    # Core, ETL, CQS, Run — auto-register all bundle services
+    # -------------------------------------------------------------------------
+    BoutDeCode\ETLCoreBundle\:
+        resource: '../../'
+        exclude:
+            - '../../DependencyInjection/'
+            - '../../BoutDeCodeETLCoreBundle.php'
+            - '../../Resources/'
+
+    # -------------------------------------------------------------------------
+    # Step Middlewares (ordered by priority)
+    # -------------------------------------------------------------------------
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Step\StepStartMiddleware:
+        tags:
+            - { name: 'boutdecode_etl_core.step_middleware', priority: 100 }
+
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Step\StepFailureMiddleware:
+        tags:
+            - { name: 'boutdecode_etl_core.step_middleware', priority: 1 }
+
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Step\StepProcessMiddleware:
+        tags:
+            - { name: 'boutdecode_etl_core.step_middleware', priority: 0 }
+
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Step\StepHistoryMiddleware:
+        tags:
+            - { name: 'boutdecode_etl_core.step_middleware', priority: -50 }
+
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Step\StepSuccessMiddleware:
+        tags:
+            - { name: 'boutdecode_etl_core.step_middleware', priority: -100 }
+
+    # -------------------------------------------------------------------------
+    # Pipeline Middlewares (ordered by priority)
+    # -------------------------------------------------------------------------
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Pipeline\PipelineStartMiddleware:
+        tags:
+            - { name: 'boutdecode_etl_core.pipeline_middleware', priority: 100 }
+
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Pipeline\PipelineFailureMiddleware:
+        tags:
+            - { name: 'boutdecode_etl_core.pipeline_middleware', priority: 1 }
+
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Pipeline\PipelineProcessMiddleware:
+        tags:
+            - { name: 'boutdecode_etl_core.pipeline_middleware', priority: 0 }
+
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Pipeline\PipelineHistoryMiddleware:
+        tags:
+            - { name: 'boutdecode_etl_core.pipeline_middleware', priority: -50 }
+
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Pipeline\PipelineSuccessMiddleware:
+        tags:
+            - { name: 'boutdecode_etl_core.pipeline_middleware', priority: -100 }
+
+    # -------------------------------------------------------------------------
+    # Middleware chains — inject tagged iterators
+    # -------------------------------------------------------------------------
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Pipeline\PipelineMiddlewareChain:
+        arguments:
+            $middlewares: !tagged_iterator 'boutdecode_etl_core.pipeline_middleware'
+
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Step\StepMiddlewareChain:
+        arguments:
+            $middlewares: !tagged_iterator 'boutdecode_etl_core.step_middleware'
+
+    # -------------------------------------------------------------------------
+    # Step resolver
+    # -------------------------------------------------------------------------
+    BoutDeCode\ETLCoreBundle\ETL\Domain\Resolver\DefaultStepResolver:
+        arguments:
+            $steps: !tagged_iterator 'boutdecode_etl_core.executable_step'
+
+    # -------------------------------------------------------------------------
+    # Messenger buses — injected by named autowiring
+    # -------------------------------------------------------------------------
+    BoutDeCode\ETLCoreBundle\CQS\Infrastructure\Messenger\MessengerCommandBus:
+        arguments:
+            $commandBus: '@boutdecode_etl_core.command.bus'
+
+    BoutDeCode\ETLCoreBundle\CQS\Infrastructure\Messenger\MessengerQueryBus:
+        arguments:
+            $queryBus: '@boutdecode_etl_core.query.bus'
+
+    # -------------------------------------------------------------------------
+    # Interface aliases
+    # -------------------------------------------------------------------------
+    BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command\CommandBus:
+        alias: BoutDeCode\ETLCoreBundle\CQS\Infrastructure\Messenger\MessengerCommandBus
+        public: true
+
+    BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Query\QueryBus:
+        alias: BoutDeCode\ETLCoreBundle\CQS\Infrastructure\Messenger\MessengerQueryBus
+        public: true
+
+    BoutDeCode\ETLCoreBundle\ETL\Domain\Resolver\StepResolver:
+        alias: BoutDeCode\ETLCoreBundle\ETL\Domain\Resolver\DefaultStepResolver
+
+    BoutDeCode\ETLCoreBundle\Run\Domain\Runner\PipelineRunner:
+        alias: BoutDeCode\ETLCoreBundle\Run\Domain\Runner\DefaultPipelineRunner
+
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\PipelineMiddlewareChain:
+        alias: BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Pipeline\PipelineMiddlewareChain
+
+    BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\StepMiddlewareChain:
+        alias: BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Step\StepMiddlewareChain

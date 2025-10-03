@@ -1,0 +1,11 @@
+framework:
+    messenger:
+        buses:
+            boutdecode_etl_core.command.bus: ~
+            boutdecode_etl_core.query.bus: ~
+
+        routing:
+            'BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Query\Query': sync
+            'BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command\Command': sync
+            'BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command\AsyncCommand': async
+            'BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Query\AsyncQuery': async

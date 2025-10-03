@@ -1,0 +1,33 @@
+framework:
+    workflows:
+        pipeline_lifecycle:
+            type: 'state_machine'
+            audit_trail:
+                enabled: true
+            marking_store:
+                type: 'method'
+                property: 'statusValue'
+            supports:
+                - BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline
+            initial_marking: pending
+            places:
+                - pending
+                - in_progress
+                - completed
+                - failed
+            transitions:
+                start:
+                    from: pending
+                    to: in_progress
+                complete:
+                    from: in_progress
+                    to: completed
+                fail:
+                    from: in_progress
+                    to: failed
+                reset:
+                    from: [completed, failed]
+                    to: pending
+                restart:
+                    from: failed
+                    to: in_progress
