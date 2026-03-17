@@ -54,7 +54,7 @@ jobs:
               run: composer phpstan
 
     # -------------------------------------------------------------------------
-    # Test suite — matrix: PHP 8.3 / 8.4  ×  Symfony 6.4 / 7.2
+    # Test suite — matrix: PHP 8.2 / 8.3 / 8.4  ×  Symfony 6.4 / 7.2
     # -------------------------------------------------------------------------
     tests:
         name: "Tests (PHP ${{ matrix.php }} / Symfony ${{ matrix.symfony }})"
