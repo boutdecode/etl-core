@@ -9,7 +9,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ApiExtractStep extends AbstractExtractorStep
 {
-    public const string CODE = 'etl.extractor.api';
+    public const CODE = 'etl.extractor.api';
 
     protected string $code = self::CODE;
 

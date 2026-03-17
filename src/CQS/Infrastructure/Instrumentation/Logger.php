@@ -11,7 +11,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 class Logger implements InstrumentationLogger
 {
-    public const string LOG_CHANNEL = 'log';
+    public const LOG_CHANNEL = 'log';
 
     public function __construct(
         private readonly LoggerInterface $logger,

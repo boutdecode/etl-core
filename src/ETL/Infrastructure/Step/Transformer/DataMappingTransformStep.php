@@ -8,7 +8,7 @@ use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractTransformerStep;
 
 class DataMappingTransformStep extends AbstractTransformerStep
 {
-    public const string CODE = 'etl.transformer.data_mapping';
+    public const CODE = 'etl.transformer.data_mapping';
 
     protected string $code = self::CODE;
 

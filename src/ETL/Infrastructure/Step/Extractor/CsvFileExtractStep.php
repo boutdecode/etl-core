@@ -11,7 +11,7 @@ use function Flow\ETL\DSL\to_array;
 
 class CsvFileExtractStep extends AbstractExtractorStep
 {
-    public const string CODE = 'etl.extractor.csv_file';
+    public const CODE = 'etl.extractor.csv_file';
 
     protected string $code = self::CODE;
 

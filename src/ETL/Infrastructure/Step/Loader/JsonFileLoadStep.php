@@ -12,7 +12,7 @@ use function Flow\ETL\DSL\overwrite;
 
 final class JsonFileLoadStep extends AbstractLoaderStep
 {
-    public const string CODE = 'etl.loader.json_file';
+    public const CODE = 'etl.loader.json_file';
 
     protected string $code = self::CODE;
 

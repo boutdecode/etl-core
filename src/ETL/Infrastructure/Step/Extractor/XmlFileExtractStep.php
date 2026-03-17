@@ -8,7 +8,7 @@ use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExtractorStep;
 
 class XmlFileExtractStep extends AbstractExtractorStep
 {
-    public const string CODE = 'etl.extractor.xml_file';
+    public const CODE = 'etl.extractor.xml_file';
 
     protected string $code = self::CODE;
 

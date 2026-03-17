@@ -2,7 +2,7 @@
 
 A Symfony Bundle providing a configurable ETL (Extract / Transform / Load) pipeline engine built on top of Domain-Driven Design, CQS, Symfony Messenger, Symfony Workflow and Flow-PHP.
 
-[![PHP Version](https://img.shields.io/badge/PHP-8.3%20%7C%208.4-blue)](https://php.net/)
+[![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3%20%7C%208.4-blue)](https://php.net/)
 [![Symfony](https://img.shields.io/badge/Symfony-6.4%20%7C%207.x-green)](https://symfony.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
@@ -12,7 +12,7 @@ A Symfony Bundle providing a configurable ETL (Extract / Transform / Load) pipel
 
 | Dependency | Version |
 |---|---|
-| PHP | `>= 8.3` |
+| PHP | `>= 8.2` |
 | Symfony | `^6.4 \|\| ^7.0` |
 | Doctrine ORM | `^3.6` |
 | Flow-PHP ETL | `~0.25` |

@@ -7,7 +7,7 @@
 - Bundle namespace: `BoutDeCode\ETLCoreBundle\`
 - Test namespace: `BoutDeCode\ETLCoreBundle\Tests\`
 - Symfony compatibility: `^6.4 || ^7.0`
-- PHP: `>= 8.3`
+- PHP: `>= 8.2`
 - Entry point: `src/BoutDeCodeETLCoreBundle.php`
 - DI extension: `src/DependencyInjection/ETLCoreExtension.php`
 - Config tree key: `boutdecode_etl_core`

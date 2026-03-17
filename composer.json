@@ -7,7 +7,7 @@
     "prefer-stable": true,
     "keywords": ["symfony", "bundle", "etl", "pipeline", "cqs"],
     "require": {
-        "php": ">=8.3",
+        "php": ">=8.2",
         "flow-php/etl": "~0.25.0",
         "flow-php/etl-adapter-csv": "~0.25.0",
         "flow-php/etl-adapter-json": "~0.25.0",

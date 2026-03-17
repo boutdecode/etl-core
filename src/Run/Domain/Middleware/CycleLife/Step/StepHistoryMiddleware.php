@@ -12,7 +12,7 @@ use BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\Middleware;
 
 final readonly class StepHistoryMiddleware implements Middleware
 {
-    public const string STEP_HISTORIES_CONFIG_KEY = 'step_histories';
+    public const STEP_HISTORIES_CONFIG_KEY = 'step_histories';
 
     public function __construct(
         private StepHistoryPersister $stepHistoryPersister,

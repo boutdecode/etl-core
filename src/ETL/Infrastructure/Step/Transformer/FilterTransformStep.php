@@ -9,7 +9,7 @@ use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 final class FilterTransformStep extends AbstractTransformerStep
 {
-    public const string CODE = 'etl.transformer.filter';
+    public const CODE = 'etl.transformer.filter';
 
     protected string $code = self::CODE;
 
