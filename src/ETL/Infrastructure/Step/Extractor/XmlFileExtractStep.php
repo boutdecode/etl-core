@@ -4,14 +4,21 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Extractor;
 
+use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Attribute\AsExecutableStep;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExtractorStep;
 
+#[AsExecutableStep(
+    code: 'etl.extractor.xml_file',
+    configurationDescription: [
+        'source' => 'Path to the XML file to extract data from',
+        'rootNode' => 'The root node of the XML document (default: "root")',
+        'recordNode' => 'The node that represents a single record (default: "record")',
+        'useAttributes' => 'Whether to include XML attributes in the extracted data (default: true)',
+    ],
+)]
 class XmlFileExtractStep extends AbstractExtractorStep
 {
-    public const CODE = 'etl.extractor.xml_file';
-
-    protected string $code = self::CODE;
-
     public function __construct(
         private readonly string $rootNode = 'root',
         private readonly string $recordNode = 'record',
@@ -20,22 +27,10 @@ class XmlFileExtractStep extends AbstractExtractorStep
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    public function getConfigurationDescription(): array
-    {
-        return [
-            'source' => 'Path to the XML file to extract data from',
-            'rootNode' => 'The root node of the XML document (default: "root")',
-            'recordNode' => 'The node that represents a single record (default: "record")',
-            'useAttributes' => 'Whether to include XML attributes in the extracted data (default: true)',
-        ];
-    }
-
-    /**
+     * @param array<string, mixed> $configuration
      * @return array<mixed>
      */
-    public function extract(mixed $source, array $configuration = []): array
+    public function extract(mixed $source, Context $context, array $configuration = []): array
     {
         if (is_array($source)) {
             $source = $source['source'] ?? null;

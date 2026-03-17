@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Transformer;
 
+use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractTransformerStep;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Transformer\DataMappingTransformStep;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,7 +22,6 @@ class DataMappingTransformStepTest extends TestCase
     #[Test]
     public function getCodeShouldReturnCorrectCode(): void
     {
-        $this->assertSame(DataMappingTransformStep::CODE, $this->transformStep->getCode());
         $this->assertSame('etl.transformer.data_mapping', $this->transformStep->getCode());
     }
 
@@ -55,7 +55,7 @@ class DataMappingTransformStepTest extends TestCase
             ],
         ];
 
-        $result = $this->transformStep->transform($data);
+        $result = $this->transformStep->transform($data, new Context(null));
 
         $this->assertSame($data, $result);
     }
@@ -68,7 +68,7 @@ class DataMappingTransformStepTest extends TestCase
             'age' => 30,
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [],
         ]);
 
@@ -78,7 +78,7 @@ class DataMappingTransformStepTest extends TestCase
     #[Test]
     public function transformWithNonArrayDataAndNoMappingShouldReturnDataAsIs(): void
     {
-        $result = $this->transformStep->transform('just a string');
+        $result = $this->transformStep->transform('just a string', new Context(null));
 
         $this->assertSame('just a string', $result);
     }
@@ -91,7 +91,7 @@ class DataMappingTransformStepTest extends TestCase
             'last_name' => 'Doe',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'first_name' => 'firstName',
                 'last_name' => 'lastName',
@@ -117,7 +117,7 @@ class DataMappingTransformStepTest extends TestCase
             ],
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'old_name' => 'name',
             ],
@@ -138,7 +138,7 @@ class DataMappingTransformStepTest extends TestCase
             'city' => 'Paris',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'first_name' => 'name',
             ],
@@ -159,7 +159,7 @@ class DataMappingTransformStepTest extends TestCase
             'age' => 30,
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'first_name' => 'name',
             ],
@@ -186,7 +186,7 @@ class DataMappingTransformStepTest extends TestCase
             'extra' => 'ignored',
         ];
 
-        $result = $transformStep->transform($data);
+        $result = $transformStep->transform($data, new Context(null));
 
         $this->assertIsArray($result);
         $this->assertArrayHasKey('dst', $result);
@@ -206,7 +206,7 @@ class DataMappingTransformStepTest extends TestCase
             'override_src' => 'hello',
         ];
 
-        $result = $transformStep->transform($data, [
+        $result = $transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'override_src' => 'override_dst',
             ],
@@ -223,7 +223,7 @@ class DataMappingTransformStepTest extends TestCase
             'name' => 'john',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'name' => [
                     'target' => 'fullName',
@@ -243,7 +243,7 @@ class DataMappingTransformStepTest extends TestCase
             'name' => 'JOHN',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'name' => [
                     'target' => 'lowerName',
@@ -262,7 +262,7 @@ class DataMappingTransformStepTest extends TestCase
             'name' => '  John  ',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'name' => [
                     'target' => 'trimmedName',
@@ -281,7 +281,7 @@ class DataMappingTransformStepTest extends TestCase
             'score' => '42',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'score' => [
                     'target' => 'intScore',
@@ -300,7 +300,7 @@ class DataMappingTransformStepTest extends TestCase
             'price' => '9.99',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'price' => [
                     'target' => 'floatPrice',
@@ -319,7 +319,7 @@ class DataMappingTransformStepTest extends TestCase
             'count' => 42,
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'count' => [
                     'target' => 'strCount',
@@ -338,7 +338,7 @@ class DataMappingTransformStepTest extends TestCase
             'active' => 1,
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'active' => [
                     'target' => 'boolActive',
@@ -357,7 +357,7 @@ class DataMappingTransformStepTest extends TestCase
             'birthday' => '1990-06-15',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'birthday' => [
                     'target' => 'parsedDate',
@@ -378,7 +378,7 @@ class DataMappingTransformStepTest extends TestCase
             'ts' => $timestamp,
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'ts' => [
                     'target' => 'parsedDate',
@@ -398,7 +398,7 @@ class DataMappingTransformStepTest extends TestCase
             'created' => $dt,
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'created' => [
                     'target' => 'createdAt',
@@ -418,7 +418,7 @@ class DataMappingTransformStepTest extends TestCase
             'bad_date' => 'not-a-date-at-all-xyz',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'bad_date' => [
                     'target' => 'parsedDate',
@@ -437,7 +437,7 @@ class DataMappingTransformStepTest extends TestCase
             'meta' => '{"key":"value"}',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'meta' => [
                     'target' => 'decoded',
@@ -462,7 +462,7 @@ class DataMappingTransformStepTest extends TestCase
             ],
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'meta' => [
                     'target' => 'encoded',
@@ -481,7 +481,7 @@ class DataMappingTransformStepTest extends TestCase
             'name' => 'John',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'missing_field' => [
                     'target' => 'withDefault',
@@ -500,7 +500,7 @@ class DataMappingTransformStepTest extends TestCase
             'name' => 'john',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'name' => [
                     'transform' => 'upper',
@@ -519,7 +519,7 @@ class DataMappingTransformStepTest extends TestCase
             'other' => 'value',
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'missing' => 'target',
             ],
@@ -537,7 +537,7 @@ class DataMappingTransformStepTest extends TestCase
             'b' => 2,
         ];
 
-        $result = $this->transformStep->transform($data, [
+        $result = $this->transformStep->transform($data, new Context(null), [
             'fieldMapping' => [
                 'a' => 'mapped_a',
             ],

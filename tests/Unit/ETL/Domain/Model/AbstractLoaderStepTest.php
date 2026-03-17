@@ -292,7 +292,7 @@ class ConcreteLoaderStep extends AbstractLoaderStep
 {
     protected string $code = 'test_loader';
 
-    public function load(mixed $data, mixed $destination, array $configuration = []): mixed
+    public function load(mixed $data, mixed $destination, Context $context, array $configuration = []): mixed
     {
         return [
             'loaded_data' => $data,

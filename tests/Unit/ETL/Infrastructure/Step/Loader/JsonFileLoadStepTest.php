@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Loader;
 
+use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Loader\JsonFileLoadStep;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,7 +31,6 @@ class JsonFileLoadStepTest extends TestCase
     #[Test]
     public function getCodeShouldReturnCorrectCode(): void
     {
-        $this->assertSame(JsonFileLoadStep::CODE, $this->loadStep->getCode());
         $this->assertSame('etl.loader.json_file', $this->loadStep->getCode());
     }
 
@@ -48,7 +48,7 @@ class JsonFileLoadStepTest extends TestCase
             ],
         ];
 
-        $result = $this->loadStep->load($data, $this->tempFilePath);
+        $result = $this->loadStep->load($data, $this->tempFilePath, new Context(null));
 
         $this->assertTrue($result);
         $this->assertFileExists($this->tempFilePath);
@@ -69,7 +69,7 @@ class JsonFileLoadStepTest extends TestCase
             'age' => 30,
         ];
 
-        $result = $this->loadStep->load($data, $this->tempFilePath);
+        $result = $this->loadStep->load($data, $this->tempFilePath, new Context(null));
 
         $this->assertTrue($result);
         $this->assertFileExists($this->tempFilePath);
@@ -92,7 +92,7 @@ class JsonFileLoadStepTest extends TestCase
         $configuration = [
             'options' => JSON_UNESCAPED_UNICODE,
         ];
-        $result = $this->loadStep->load($data, $this->tempFilePath, $configuration);
+        $result = $this->loadStep->load($data, $this->tempFilePath, new Context(null), $configuration);
 
         $this->assertTrue($result);
         $this->assertFileExists($this->tempFilePath);
@@ -107,7 +107,7 @@ class JsonFileLoadStepTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('File path must be a string');
 
-        $this->loadStep->load(['data'], 123);
+        $this->loadStep->load(['data'], 123, new Context(null));
     }
 
     #[Test]
@@ -118,7 +118,7 @@ class JsonFileLoadStepTest extends TestCase
 
         $this->loadStep->load(['data'], [
             'not' => 'string',
-        ]);
+        ], new Context(null));
     }
 
     #[Test]
@@ -127,7 +127,7 @@ class JsonFileLoadStepTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('File path must be a string');
 
-        $this->loadStep->load(['data'], null);
+        $this->loadStep->load(['data'], null, new Context(null));
     }
 
     #[Test]
@@ -141,7 +141,7 @@ class JsonFileLoadStepTest extends TestCase
         ]];
         $tempPath = sys_get_temp_dir() . '/test_custom_' . uniqid() . '.json';
 
-        $result = $loadStep->load($data, $tempPath);
+        $result = $loadStep->load($data, $tempPath, new Context(null));
 
         $this->assertTrue($result);
         $this->assertFileExists($tempPath);
@@ -167,7 +167,7 @@ class JsonFileLoadStepTest extends TestCase
         $configuration = [
             'options' => JSON_PRETTY_PRINT,
         ];
-        $result = $loadStep->load($data, $tempPath, $configuration);
+        $result = $loadStep->load($data, $tempPath, new Context(null), $configuration);
 
         $this->assertTrue($result);
         $this->assertFileExists($tempPath);
@@ -188,7 +188,7 @@ class JsonFileLoadStepTest extends TestCase
         $data = [[
             'test' => 'data',
         ]];
-        $result = $this->loadStep->load($data, $this->tempFilePath, $configuration);
+        $result = $this->loadStep->load($data, $this->tempFilePath, new Context(null), $configuration);
 
         $this->assertTrue($result);
         $this->assertFileExists($this->tempFilePath);
@@ -197,7 +197,7 @@ class JsonFileLoadStepTest extends TestCase
     #[Test]
     public function loadWithEmptyArrayShouldWork(): void
     {
-        $result = $this->loadStep->load([], $this->tempFilePath);
+        $result = $this->loadStep->load([], $this->tempFilePath, new Context(null));
 
         $this->assertTrue($result);
         // Flow-PHP may not create file for empty arrays
@@ -225,11 +225,11 @@ class JsonFileLoadStepTest extends TestCase
         ]];
 
         // Write initial file
-        $this->loadStep->load($initialData, $this->tempFilePath);
+        $this->loadStep->load($initialData, $this->tempFilePath, new Context(null));
         $this->assertFileExists($this->tempFilePath);
 
         // Overwrite with new data
-        $result = $this->loadStep->load($newData, $this->tempFilePath);
+        $result = $this->loadStep->load($newData, $this->tempFilePath, new Context(null));
 
         $this->assertTrue($result);
 

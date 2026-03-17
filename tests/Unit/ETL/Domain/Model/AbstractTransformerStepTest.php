@@ -231,7 +231,7 @@ class ConcreteTransformerStep extends AbstractTransformerStep
 {
     protected string $code = 'test_transformer';
 
-    public function transform(mixed $data, array $configuration = []): mixed
+    public function transform(mixed $data, Context $context, array $configuration = []): mixed
     {
         return [
             'transformed_data' => $data,

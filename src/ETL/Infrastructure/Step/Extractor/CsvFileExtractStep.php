@@ -4,17 +4,25 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Extractor;
 
+use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Attribute\AsExecutableStep;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExtractorStep;
 use function Flow\ETL\Adapter\CSV\from_csv;
 use function Flow\ETL\DSL\data_frame;
 use function Flow\ETL\DSL\to_array;
 
+#[AsExecutableStep(
+    code: 'etl.extractor.csv_file',
+    configurationDescription: [
+        'source' => 'Path to the CSV file to extract data from',
+        'delimiter' => 'Field delimiter (default: ",")',
+        'hasHeader' => 'Whether the first row contains column names (default: true)',
+        'enclosure' => 'Field enclosure character (default: \'"\')',
+        'escape' => 'Escape character (default: "\\\\")',
+    ],
+)]
 class CsvFileExtractStep extends AbstractExtractorStep
 {
-    public const CODE = 'etl.extractor.csv_file';
-
-    protected string $code = self::CODE;
-
     public function __construct(
         private readonly string $delimiter = ',',
         private readonly bool $hasHeader = true,
@@ -22,23 +30,10 @@ class CsvFileExtractStep extends AbstractExtractorStep
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    public function getConfigurationDescription(): array
-    {
-        return [
-            'source' => 'Path to the CSV file to extract data from',
-            'delimiter' => 'Field delimiter (default: ",")',
-            'hasHeader' => 'Whether the first row contains column names (default: true)',
-            'enclosure' => 'Field enclosure character (default: \'"\' )',
-            'escape' => 'Escape character (default: "\\\\")',
-        ];
-    }
-
-    /**
+     * @param array<string, mixed> $configuration
      * @return array<mixed>
      */
-    public function extract(mixed $source, array $configuration = []): array
+    public function extract(mixed $source, Context $context, array $configuration = []): array
     {
         if (is_array($source)) {
             $source = $source['source'] ?? $configuration['source'] ?? $this->configuration['source'] ?? null;

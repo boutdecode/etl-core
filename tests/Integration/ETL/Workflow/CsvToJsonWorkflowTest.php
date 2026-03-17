@@ -129,7 +129,7 @@ class CsvToJsonWorkflowTest extends TestCase
         $jsonLoader->setName('save_to_json');
 
         $outputFile = $this->outputDir . '/processed_data.json';
-        $loadResult = $jsonLoader->load($mappedData, $outputFile);
+        $loadResult = $jsonLoader->load($mappedData, $outputFile, new \BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context(null));
 
         // Verify loading
         $this->assertTrue($loadResult);

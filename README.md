@@ -435,36 +435,147 @@ src/
 
 ## Implementing a Custom Step
 
-### 1. Create the step class
+### 1. Declare the step with `#[AsExecutableStep]`
 
-Extend one of the three base step classes depending on the role:
+Every step class must carry the `#[AsExecutableStep]` attribute. It serves two purposes:
+
+- **`code`** — the unique machine identifier used to resolve the step at runtime (e.g. when a `Workflow` references a step by its code). It must be unique across the whole application.
+- **`configurationDescription`** *(optional)* — a map of configuration key → human-readable description, returned by `getConfigurationDescription()`. Useful for documentation and introspection.
 
 ```php
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Attribute\AsExecutableStep;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExtractorStep;
-use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Context;
 
+#[AsExecutableStep(
+    code: 'app.extractor.my_csv',
+    configurationDescription: [
+        'source'    => 'Absolute path to the CSV file',
+        'delimiter' => 'Field delimiter character (default: ",")',
+    ],
+)]
 final class MyCsvExtractorStep extends AbstractExtractorStep
 {
-    public function process(Context $context): Context
-    {
-        $rows = $this->readCsv($context->getConfigurationValue('file'));
+    // …
+}
+```
 
-        return $context->setResult('extracted_data', $rows);
+### 2. Implement the stage method
+
+Extend one of the three abstract base classes and implement the corresponding method. The `Context $context` parameter is always injected by the framework — you do not need to call `process()` yourself.
+
+| Base class | Method to implement | Signature |
+|---|---|---|
+| `AbstractExtractorStep` | `extract()` | `extract(mixed $source, Context $context, array $configuration = []): mixed` |
+| `AbstractTransformerStep` | `transform()` | `transform(mixed $data, Context $context, array $configuration = []): mixed` |
+| `AbstractLoaderStep` | `load()` | `load(mixed $data, mixed $destination, Context $context, array $configuration = []): mixed` |
+
+The `$configuration` array is automatically populated from the step's entry in the pipeline configuration. Default values can also be injected via the constructor and stored in `$this->configuration`.
+
+#### Extractor example
+
+```php
+use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Attribute\AsExecutableStep;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExtractorStep;
+
+#[AsExecutableStep(
+    code: 'app.extractor.my_csv',
+    configurationDescription: [
+        'source'    => 'Absolute path to the CSV file',
+        'delimiter' => 'Field delimiter character (default: ",")',
+    ],
+)]
+final class MyCsvExtractorStep extends AbstractExtractorStep
+{
+    public function __construct(
+        private readonly string $delimiter = ',',
+    ) {}
+
+    public function extract(mixed $source, Context $context, array $configuration = []): array
+    {
+        $filePath  = is_string($source) ? $source : ($configuration['source'] ?? '');
+        $delimiter = $configuration['delimiter'] ?? $this->delimiter;
+
+        // … read and return rows …
+        return [];
     }
 }
 ```
 
-Available base classes:
+#### Transformer example
 
-| Base class | Role |
-|---|---|
-| `AbstractExtractorStep` | Reads data from a source |
-| `AbstractTransformerStep` | Transforms / filters data |
-| `AbstractLoaderStep` | Writes data to a destination |
+```php
+use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Attribute\AsExecutableStep;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractTransformerStep;
 
-### 2. Register the step
+#[AsExecutableStep(
+    code: 'app.transformer.uppercase_name',
+    configurationDescription: [
+        'field' => 'Name of the field to uppercase (default: "name")',
+    ],
+)]
+final class UppercaseNameTransformStep extends AbstractTransformerStep
+{
+    public function transform(mixed $data, Context $context, array $configuration = []): mixed
+    {
+        if (! is_array($data)) {
+            return $data;
+        }
 
-Tag it with `boutdecode_etl_core.executable_step` (or let `_instanceof` do it automatically since all `ExecutableStep` implementations are tagged by default):
+        $field = $configuration['field'] ?? 'name';
+
+        return array_map(static function (array $row) use ($field): array {
+            if (isset($row[$field]) && is_string($row[$field])) {
+                $row[$field] = strtoupper($row[$field]);
+            }
+
+            return $row;
+        }, $data);
+    }
+}
+```
+
+#### Loader example
+
+```php
+use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Attribute\AsExecutableStep;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractLoaderStep;
+
+#[AsExecutableStep(
+    code: 'app.loader.csv_file',
+    configurationDescription: [
+        'destination' => 'Absolute path to the output CSV file',
+    ],
+)]
+final class CsvFileLoadStep extends AbstractLoaderStep
+{
+    public function load(mixed $data, mixed $destination, Context $context, array $configuration = []): bool
+    {
+        if (! is_string($destination)) {
+            throw new \InvalidArgumentException('Destination must be a file path string.');
+        }
+
+        // … write $data to $destination …
+        return true;
+    }
+}
+```
+
+### 3. Register the step
+
+All classes that implement `ExecutableStep` (which all three abstract base classes do) are **automatically tagged** `boutdecode_etl_core.executable_step` via `_instanceof` — no manual service configuration is required as long as your class is picked up by Symfony's autowiring.
+
+```yaml
+# config/services.yaml  (standard Symfony service autodiscovery — nothing extra needed)
+App\ETL\Step\:
+    resource: '../src/ETL/Step/'
+    autowire: true
+    autoconfigure: true
+```
+
+If for any reason you need to register a step explicitly:
 
 ```yaml
 # config/services.yaml
@@ -472,6 +583,42 @@ App\ETL\Step\MyCsvExtractorStep:
     tags:
         - { name: boutdecode_etl_core.executable_step }
 ```
+
+### 4. Reference the step in a Workflow
+
+Use the `code` declared in `#[AsExecutableStep]` as the step identifier in your `Workflow`'s `stepConfiguration`:
+
+```php
+$workflow->setStepConfiguration([
+    [
+        'code'          => 'app.extractor.my_csv',
+        'name'          => 'extract_customers',
+        'order'         => 1,
+        'configuration' => [
+            'source'    => '/data/customers.csv',
+            'delimiter' => ';',
+        ],
+    ],
+    [
+        'code'          => 'app.transformer.uppercase_name',
+        'name'          => 'normalize_names',
+        'order'         => 2,
+        'configuration' => [
+            'field' => 'name',
+        ],
+    ],
+    [
+        'code'          => 'app.loader.csv_file',
+        'name'          => 'save_result',
+        'order'         => 3,
+        'configuration' => [
+            'destination' => '/output/result.csv',
+        ],
+    ],
+]);
+```
+
+At runtime, the `StepResolver` reads each step's `code`, finds the matching tagged service in the container, and injects the per-step `configuration` before execution.
 
 ---
 
@@ -690,7 +837,7 @@ composer test:unit
 composer test:integration
 ```
 
-Current status: **326 unit tests, 3 integration tests — all passing**.
+Current status: **394 unit tests, 3 integration tests — all passing**.
 
 ---
 

@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Transformer;
 
+use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Attribute\AsExecutableStep;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractTransformerStep;
 
+#[AsExecutableStep(
+    code: 'etl.transformer.data_mapping',
+    configurationDescription: [
+        'fieldMapping' => 'An associative array defining how to map source fields to target fields. It can be a simple mapping (e.g., "old_name" => "new_name") or a complex mapping with transformations (e.g., "old_name" => ["target" => "new_name", "transform" => "upper", "default" => "N/A"])',
+        'removeUnmappedFields' => 'Whether to remove fields that are not included in the field mapping (default: false)',
+    ],
+)]
 class DataMappingTransformStep extends AbstractTransformerStep
 {
-    public const CODE = 'etl.transformer.data_mapping';
-
-    protected string $code = self::CODE;
-
     public function __construct(
         /**
          * @var array<string, mixed>
@@ -21,18 +26,7 @@ class DataMappingTransformStep extends AbstractTransformerStep
     ) {
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function getConfigurationDescription(): array
-    {
-        return [
-            'fieldMapping' => 'An associative array defining how to map source fields to target fields. It can be a simple mapping (e.g., "old_name" => "new_name") or a complex mapping with transformations (e.g., "old_name" => ["target" => "new_name", "transform" => "upper", "default" => "N/A"])',
-            'removeUnmappedFields' => 'Whether to remove fields that are not included in the field mapping (default: false)',
-        ];
-    }
-
-    public function transform(mixed $data, array $configuration = []): mixed
+    public function transform(mixed $data, Context $context, array $configuration = []): mixed
     {
         $fieldMapping = $configuration['fieldMapping'] ?? $this->configuration['fieldMapping'] ?? $this->fieldMapping;
         $removeUnmapped = $configuration['removeUnmappedFields'] ?? $this->configuration['removeUnmappedFields'] ?? $this->removeUnmappedFields;

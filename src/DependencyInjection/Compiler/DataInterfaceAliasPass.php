@@ -24,7 +24,7 @@ final class DataInterfaceAliasPass implements CompilerPassInterface
      * Les interfaces du domaine que le bundle expose et dont il attend
      * une implémentation unique fournie par l'application consommatrice.
      */
-    private const array INTERFACES = [
+    private const INTERFACES = [
         WorkflowProvider::class,
         WorkflowPersister::class,
         PipelineProvider::class,

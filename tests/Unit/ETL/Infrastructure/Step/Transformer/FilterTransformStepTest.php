@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Transformer;
 
+use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Transformer\FilterTransformStep;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +21,6 @@ class FilterTransformStepTest extends TestCase
     #[Test]
     public function getCodeShouldReturnCorrectCode(): void
     {
-        $this->assertSame(FilterTransformStep::CODE, $this->transformStep->getCode());
         $this->assertSame('etl.transformer.filter', $this->transformStep->getCode());
     }
 
@@ -42,7 +42,7 @@ class FilterTransformStepTest extends TestCase
             ],
         ];
 
-        $result = $this->transformStep->transform($data);
+        $result = $this->transformStep->transform($data, new Context(null));
 
         $this->assertIsArray($result);
         $this->assertCount(3, $result);
@@ -70,7 +70,7 @@ class FilterTransformStepTest extends TestCase
         $configuration = [
             'filterExpression' => 'item.age > 27',
         ];
-        $result = $this->transformStep->transform($data, $configuration);
+        $result = $this->transformStep->transform($data, new Context(null), $configuration);
 
         $this->assertIsArray($result);
         $this->assertCount(2, $result);
@@ -107,7 +107,7 @@ class FilterTransformStepTest extends TestCase
         $configuration = [
             'filterExpression' => 'item.category == "admin"',
         ];
-        $result = $this->transformStep->transform($data, $configuration);
+        $result = $this->transformStep->transform($data, new Context(null), $configuration);
 
         $this->assertIsArray($result);
         $this->assertCount(2, $result);
@@ -152,7 +152,7 @@ class FilterTransformStepTest extends TestCase
         $configuration = [
             'filterExpression' => 'item.age >= 30 and item.active == true',
         ];
-        $result = $this->transformStep->transform($data, $configuration);
+        $result = $this->transformStep->transform($data, new Context(null), $configuration);
 
         $this->assertIsArray($result);
         $this->assertCount(2, $result);
@@ -173,7 +173,7 @@ class FilterTransformStepTest extends TestCase
     #[Test]
     public function transformWithEmptyDataShouldReturnEmptyArray(): void
     {
-        $result = $this->transformStep->transform([]);
+        $result = $this->transformStep->transform([], new Context(null));
 
         $this->assertIsArray($result);
         $this->assertCount(0, $result);
@@ -185,7 +185,7 @@ class FilterTransformStepTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Data must be an array');
 
-        $this->transformStep->transform('not an array');
+        $this->transformStep->transform('not an array', new Context(null));
     }
 
     #[Test]
@@ -194,7 +194,7 @@ class FilterTransformStepTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Data must be an array');
 
-        $this->transformStep->transform(123);
+        $this->transformStep->transform(123, new Context(null));
     }
 
     #[Test]
@@ -214,7 +214,7 @@ class FilterTransformStepTest extends TestCase
             ],
         ];
 
-        $result = $transformStep->transform($data);
+        $result = $transformStep->transform($data, new Context(null));
 
         $this->assertIsArray($result);
         $this->assertCount(1, $result);
@@ -240,7 +240,7 @@ class FilterTransformStepTest extends TestCase
         $configuration = [
             'filterExpression' => 'item.age < 30',
         ];
-        $result = $transformStep->transform($data, $configuration);
+        $result = $transformStep->transform($data, new Context(null), $configuration);
 
         $this->assertIsArray($result);
         $this->assertCount(1, $result);
@@ -264,7 +264,7 @@ class FilterTransformStepTest extends TestCase
             'filterExpression' => 'invalid syntax here !!!',
         ];
 
-        $this->transformStep->transform($data, $configuration);
+        $this->transformStep->transform($data, new Context(null), $configuration);
     }
 
     #[Test]
@@ -295,7 +295,7 @@ class FilterTransformStepTest extends TestCase
         $configuration = [
             'filterExpression' => 'item.score >= 80',
         ];
-        $result = $this->transformStep->transform($data, $configuration);
+        $result = $this->transformStep->transform($data, new Context(null), $configuration);
 
         $this->assertIsArray($result);
         $this->assertCount(2, $result);

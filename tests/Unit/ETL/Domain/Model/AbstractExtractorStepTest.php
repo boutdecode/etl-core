@@ -167,7 +167,7 @@ class TestExtractorStep extends AbstractExtractorStep
         ];
     }
 
-    public function extract(mixed $source, array $configuration = []): array
+    public function extract(mixed $source, Context $context, array $configuration = []): array
     {
         if (isset($configuration['custom']) && $configuration['custom'] === 'config') {
             return [
@@ -190,7 +190,7 @@ class TestExtractorStepWithoutName extends AbstractExtractorStep
         $this->configuration = [];
     }
 
-    public function extract(mixed $source, array $configuration = []): array
+    public function extract(mixed $source, Context $context, array $configuration = []): array
     {
         return [
             'extracted' => $source,

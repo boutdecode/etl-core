@@ -4,34 +4,29 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Transformer;
 
+use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Attribute\AsExecutableStep;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractTransformerStep;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
+#[AsExecutableStep(
+    code: 'etl.transformer.filter',
+    configurationDescription: [
+        'filterExpression' => 'A Symfony Expression Language expression used to filter items. The expression can reference the current item using the variable item.',
+    ],
+)]
 final class FilterTransformStep extends AbstractTransformerStep
 {
-    public const CODE = 'etl.transformer.filter';
-
-    protected string $code = self::CODE;
-
     public function __construct(
         private readonly string $filterExpression = 'item'
     ) {
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    public function getConfigurationDescription(): array
-    {
-        return [
-            'filterExpression' => 'A Symfony Expression Language expression used to filter items. The expression can reference the current item using the variable item.',
-        ];
-    }
-
-    /**
+     * @param array<string, mixed> $configuration
      * @return array<mixed>
      */
-    public function transform(mixed $data, array $configuration = []): array
+    public function transform(mixed $data, Context $context, array $configuration = []): array
     {
         if (! is_array($data)) {
             throw new \InvalidArgumentException('Data must be an array');

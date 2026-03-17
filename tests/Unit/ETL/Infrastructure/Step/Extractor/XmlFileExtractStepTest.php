@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Extractor;
 
+use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExtractorStep;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Extractor\XmlFileExtractStep;
 use PHPUnit\Framework\Attributes\Test;
@@ -18,17 +19,19 @@ class XmlFileExtractStepTest extends TestCase
 
     private XmlFileExtractStep $extractStep;
 
+    private Context $context;
+
     protected function setUp(): void
     {
         $this->testXmlPath = __DIR__ . '/../../../../../fixtures/test_data.xml';
         $this->testNestedXmlPath = __DIR__ . '/../../../../../fixtures/test_nested.xml';
         $this->extractStep = new XmlFileExtractStep();
+        $this->context = new Context(null);
     }
 
     #[Test]
     public function getCodeShouldReturnCorrectCode(): void
     {
-        $this->assertSame(XmlFileExtractStep::CODE, $this->extractStep->getCode());
         $this->assertSame('etl.extractor.xml_file', $this->extractStep->getCode());
     }
 
@@ -53,7 +56,7 @@ class XmlFileExtractStepTest extends TestCase
     #[Test]
     public function extractWithDefaultParametersShouldParseRecordNodes(): void
     {
-        $result = $this->extractStep->extract($this->testXmlPath);
+        $result = $this->extractStep->extract($this->testXmlPath, $this->context);
 
         $this->assertIsArray($result);
         $this->assertCount(3, $result);
@@ -74,7 +77,7 @@ class XmlFileExtractStepTest extends TestCase
             'source' => $this->testXmlPath,
         ];
 
-        $result = $this->extractStep->extract($source);
+        $result = $this->extractStep->extract($source, $this->context);
 
         $this->assertIsArray($result);
         $this->assertCount(3, $result);
@@ -83,7 +86,7 @@ class XmlFileExtractStepTest extends TestCase
     #[Test]
     public function extractWithAttributesShouldIncludeThemWhenUseAttributesIsTrue(): void
     {
-        $result = $this->extractStep->extract($this->testXmlPath);
+        $result = $this->extractStep->extract($this->testXmlPath, $this->context);
 
         $firstRecord = $result[0];
         $this->assertArrayHasKey('@id', $firstRecord);
@@ -95,7 +98,7 @@ class XmlFileExtractStepTest extends TestCase
     {
         $extractStep = new XmlFileExtractStep(useAttributes: false);
 
-        $result = $extractStep->extract($this->testXmlPath);
+        $result = $extractStep->extract($this->testXmlPath, $this->context);
 
         $this->assertIsArray($result);
         $firstRecord = $result[0];
@@ -106,7 +109,7 @@ class XmlFileExtractStepTest extends TestCase
     #[Test]
     public function extractWithConfigurationUseAttributesFalseShouldOverrideConstructorDefault(): void
     {
-        $result = $this->extractStep->extract($this->testXmlPath, [
+        $result = $this->extractStep->extract($this->testXmlPath, $this->context, [
             'useAttributes' => false,
         ]);
 
@@ -119,7 +122,7 @@ class XmlFileExtractStepTest extends TestCase
     {
         $extractStep = new XmlFileExtractStep(recordNode: 'item');
 
-        $result = $extractStep->extract($this->testNestedXmlPath);
+        $result = $extractStep->extract($this->testNestedXmlPath, $this->context);
 
         $this->assertIsArray($result);
         $this->assertCount(2, $result);
@@ -130,7 +133,7 @@ class XmlFileExtractStepTest extends TestCase
     #[Test]
     public function extractWithRecordNodeInConfigurationShouldOverrideConstructorDefault(): void
     {
-        $result = $this->extractStep->extract($this->testNestedXmlPath, [
+        $result = $this->extractStep->extract($this->testNestedXmlPath, $this->context, [
             'recordNode' => 'item',
         ]);
 
@@ -141,7 +144,7 @@ class XmlFileExtractStepTest extends TestCase
     #[Test]
     public function extractWithNonExistentRecordNodeShouldReturnWholeDocument(): void
     {
-        $result = $this->extractStep->extract($this->testXmlPath, [
+        $result = $this->extractStep->extract($this->testXmlPath, $this->context, [
             'recordNode' => 'nonexistent',
         ]);
 
@@ -155,7 +158,7 @@ class XmlFileExtractStepTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Source must be a string representing the file path.');
 
-        $this->extractStep->extract(42);
+        $this->extractStep->extract(42, $this->context);
     }
 
     #[Test]
@@ -166,7 +169,7 @@ class XmlFileExtractStepTest extends TestCase
 
         $this->extractStep->extract([
             'not_source' => 'value',
-        ]);
+        ], $this->context);
     }
 
     #[Test]
@@ -175,7 +178,7 @@ class XmlFileExtractStepTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('File not found:');
 
-        $this->extractStep->extract('/path/to/nonexistent.xml');
+        $this->extractStep->extract('/path/to/nonexistent.xml', $this->context);
     }
 
     #[Test]
@@ -190,7 +193,7 @@ class XmlFileExtractStepTest extends TestCase
             $this->expectExceptionMessage('Invalid XML format in file:');
 
             libxml_use_internal_errors(true);
-            $this->extractStep->extract($invalidXmlPath);
+            $this->extractStep->extract($invalidXmlPath, $this->context);
         } finally {
             libxml_clear_errors();
             libxml_use_internal_errors(false);
@@ -201,7 +204,7 @@ class XmlFileExtractStepTest extends TestCase
     #[Test]
     public function extractWithNonBoolUseAttributesShouldFallBackToConstructorDefault(): void
     {
-        $result = $this->extractStep->extract($this->testXmlPath, [
+        $result = $this->extractStep->extract($this->testXmlPath, $this->context, [
             'useAttributes' => 'not_a_bool',
         ]);
 
@@ -213,7 +216,7 @@ class XmlFileExtractStepTest extends TestCase
     #[Test]
     public function extractWithNonStringRecordNodeShouldFallBackToConstructorDefault(): void
     {
-        $result = $this->extractStep->extract($this->testXmlPath, [
+        $result = $this->extractStep->extract($this->testXmlPath, $this->context, [
             'recordNode' => 123,
         ]);
 

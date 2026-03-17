@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Extractor;
 
+use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Extractor\CsvFileExtractStep;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,24 +17,26 @@ class CsvFileExtractStepTest extends TestCase
 
     private CsvFileExtractStep $extractStep;
 
+    private Context $context;
+
     protected function setUp(): void
     {
         $this->testCsvPath = __DIR__ . '/../../../../../fixtures/test_data.csv';
         $this->testCsvSemicolonPath = __DIR__ . '/../../../../../fixtures/test_data_semicolon.csv';
         $this->extractStep = new CsvFileExtractStep();
+        $this->context = new Context(null);
     }
 
     #[Test]
     public function getCodeShouldReturnCorrectCode(): void
     {
-        $this->assertSame(CsvFileExtractStep::CODE, $this->extractStep->getCode());
         $this->assertSame('etl.extractor.csv_file', $this->extractStep->getCode());
     }
 
     #[Test]
     public function extractWithDefaultParametersShouldParseCSV(): void
     {
-        $result = $this->extractStep->extract($this->testCsvPath);
+        $result = $this->extractStep->extract($this->testCsvPath, $this->context);
 
         $this->assertIsArray($result);
         $this->assertCount(3, $result);
@@ -55,7 +58,7 @@ class CsvFileExtractStepTest extends TestCase
             'source' => $this->testCsvPath,
         ];
 
-        $result = $this->extractStep->extract($source);
+        $result = $this->extractStep->extract($source, $this->context);
 
         $this->assertIsArray($result);
         $this->assertCount(3, $result);
@@ -68,7 +71,7 @@ class CsvFileExtractStepTest extends TestCase
             'delimiter' => ';',
         ];
 
-        $result = $this->extractStep->extract($this->testCsvSemicolonPath, $configuration);
+        $result = $this->extractStep->extract($this->testCsvSemicolonPath, $this->context, $configuration);
 
         $this->assertIsArray($result);
         $this->assertCount(2, $result);
@@ -81,7 +84,7 @@ class CsvFileExtractStepTest extends TestCase
             'hasHeader' => false,
         ];
 
-        $result = $this->extractStep->extract($this->testCsvPath, $configuration);
+        $result = $this->extractStep->extract($this->testCsvPath, $this->context, $configuration);
 
         $this->assertIsArray($result);
         $firstRow = $result[0];
@@ -100,7 +103,7 @@ class CsvFileExtractStepTest extends TestCase
             'escape' => '/',
         ];
 
-        $result = $this->extractStep->extract($this->testCsvPath, $configuration);
+        $result = $this->extractStep->extract($this->testCsvPath, $this->context, $configuration);
 
         $this->assertIsArray($result);
         $this->assertCount(3, $result);
@@ -112,7 +115,7 @@ class CsvFileExtractStepTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Source must be a string representing the file path.');
 
-        $this->extractStep->extract(123);
+        $this->extractStep->extract(123, $this->context);
     }
 
     #[Test]
@@ -121,7 +124,7 @@ class CsvFileExtractStepTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('File not found:');
 
-        $this->extractStep->extract('/path/to/non/existent/file.csv');
+        $this->extractStep->extract('/path/to/non/existent/file.csv', $this->context);
     }
 
     #[Test]
@@ -132,7 +135,7 @@ class CsvFileExtractStepTest extends TestCase
 
         $this->extractStep->extract([
             'not_source' => 'value',
-        ]);
+        ], $this->context);
     }
 
     #[Test]
@@ -143,7 +146,7 @@ class CsvFileExtractStepTest extends TestCase
         $this->assertSame('etl.extractor.csv_file', $extractStep->getCode());
 
         // Test that custom defaults are used
-        $result = $extractStep->extract($this->testCsvSemicolonPath);
+        $result = $extractStep->extract($this->testCsvSemicolonPath, $this->context);
         $this->assertIsArray($result);
     }
 
@@ -156,7 +159,7 @@ class CsvFileExtractStepTest extends TestCase
             'delimiter' => ',',
             'hasHeader' => true,
         ];
-        $result = $extractStep->extract($this->testCsvPath, $configuration);
+        $result = $extractStep->extract($this->testCsvPath, $this->context, $configuration);
 
         $this->assertIsArray($result);
         $this->assertCount(3, $result);
@@ -170,7 +173,7 @@ class CsvFileExtractStepTest extends TestCase
             'hasHeader' => 'not_a_boolean',
         ];
 
-        $result = $this->extractStep->extract($this->testCsvPath, $configuration);
+        $result = $this->extractStep->extract($this->testCsvPath, $this->context, $configuration);
 
         $this->assertIsArray($result);
         $this->assertArrayHasKey('name', $result[0]); // Should use default (true)
@@ -183,7 +186,7 @@ class CsvFileExtractStepTest extends TestCase
             'delimiter' => 123,
         ];
 
-        $result = $this->extractStep->extract($this->testCsvPath, $configuration);
+        $result = $this->extractStep->extract($this->testCsvPath, $this->context, $configuration);
 
         $this->assertIsArray($result);
         $this->assertCount(3, $result);
