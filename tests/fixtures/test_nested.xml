@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog>
+    <item sku="ABC-001" available="true">
+        <title>Widget A</title>
+        <price>9.99</price>
+        <tags>
+            <tag>electronics</tag>
+            <tag>gadget</tag>
+        </tags>
+    </item>
+    <item sku="ABC-002" available="false">
+        <title>Widget B</title>
+        <price>19.99</price>
+        <tags>
+            <tag>home</tag>
+        </tags>
+    </item>
+</catalog>
