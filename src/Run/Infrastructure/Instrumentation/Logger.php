@@ -6,12 +6,10 @@ namespace BoutDeCode\ETLCoreBundle\Run\Infrastructure\Instrumentation;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Instrumentation\Logger as RunLogger;
-use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-#[WithMonologChannel('pipeline')]
 readonly class Logger implements RunLogger
 {
     public function __construct(

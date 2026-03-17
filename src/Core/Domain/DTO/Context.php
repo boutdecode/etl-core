@@ -107,13 +107,13 @@ class Context
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string>
      */
     public function getErrors(): array
     {
         $errors = [];
         foreach ($this->resultSet as $key => $value) {
-            if (is_array($value) && isset($value['error'])) {
+            if (is_array($value) && isset($value['error']) && is_string($value['error'])) {
                 $errors[$key] = $value['error'];
             }
         }
