@@ -9,12 +9,15 @@ use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Step;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Resolver\StepResolver;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\PipelineMiddlewareChain as PipelineMiddlewareChainInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 final readonly class DefaultPipelineRunner implements PipelineRunner
 {
     public function __construct(
         private PipelineMiddlewareChainInterface $middlewareChain,
         private StepResolver $stepResolver,
+        private LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -23,7 +26,7 @@ final readonly class DefaultPipelineRunner implements PipelineRunner
         /** @var list<Step> $executableSteps */
         $executableSteps = array_reduce(
             iterator_to_array($pipeline->getSteps()),
-            function (array $carry, Step $step) {
+            function (array $carry, Step $step) use ($pipeline) {
                 $executableStep = $this->stepResolver->resolve($step->getCode());
                 if ($executableStep !== null) {
                     $executableStep = clone $executableStep;
@@ -32,6 +35,11 @@ final readonly class DefaultPipelineRunner implements PipelineRunner
                     $executableStep->setOrder($step->getOrder());
 
                     $carry[] = $executableStep;
+                } else {
+                    $this->logger->warning('ETL pipeline step not found: unknown step code "{code}" will be skipped. Check for a typo in the pipeline configuration.', [
+                        'code' => $step->getCode(),
+                        'pipeline' => $pipeline->getId(),
+                    ]);
                 }
 
                 return $carry;

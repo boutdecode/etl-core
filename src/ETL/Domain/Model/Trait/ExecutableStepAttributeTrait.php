@@ -30,10 +30,6 @@ trait ExecutableStepAttributeTrait
 
     protected int $order = 0;
 
-    // -------------------------------------------------------------------------
-    // Step interface implementation
-    // -------------------------------------------------------------------------
-
     public function getCode(): string
     {
         $attribute = $this->resolveAttribute();
@@ -87,22 +83,26 @@ trait ExecutableStepAttributeTrait
         return $attribute !== null ? $attribute->configurationDescription : [];
     }
 
-    // -------------------------------------------------------------------------
-    // Attribute helpers
-    // -------------------------------------------------------------------------
-
     private function resolveAttribute(): ?AsExecutableStep
     {
-        $refClass = new \ReflectionClass(static::class);
-        $attributes = $refClass->getAttributes(AsExecutableStep::class);
+        /** @var array<class-string, AsExecutableStep|null> $cache */
+        static $cache = [];
+
+        $class = static::class;
+
+        if (array_key_exists($class, $cache)) {
+            return $cache[$class];
+        }
+
+        $attributes = (new \ReflectionClass($class))->getAttributes(AsExecutableStep::class);
 
         if ($attributes === []) {
-            return null;
+            return $cache[$class] = null;
         }
 
         /** @var AsExecutableStep $instance */
         $instance = $attributes[0]->newInstance();
 
-        return $instance;
+        return $cache[$class] = $instance;
     }
 }

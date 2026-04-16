@@ -47,6 +47,8 @@ final readonly class PipelineStateMachine implements PipelineWorkflow
 
     public function restart(Pipeline $pipeline): void
     {
-        $this->pipelineLifecycleStateMachine->apply($pipeline, 'reset');
+        $pipeline->start();
+
+        $this->pipelineLifecycleStateMachine->apply($pipeline, 'restart');
     }
 }

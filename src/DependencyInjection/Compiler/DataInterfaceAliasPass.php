@@ -57,8 +57,20 @@ final class DataInterfaceAliasPass implements CompilerPassInterface
                     /** @var class-string $className */
                     $refClass = new \ReflectionClass($className);
                     if ($refClass->implementsInterface($interface)) {
+                        if ($found !== null) {
+                            $container->log(
+                                $this,
+                                sprintf(
+                                    'Multiple implementations found for "%s": "%s" and "%s" (and possibly more). The first one found ("%s") will be used as alias. Consider defining an explicit alias in your services configuration.',
+                                    $interface,
+                                    $found,
+                                    $id,
+                                    $found,
+                                ),
+                            );
+                            break;
+                        }
                         $found = $id;
-                        break;
                     }
                 } catch (\Throwable) {
                     continue;

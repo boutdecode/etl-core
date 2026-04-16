@@ -100,6 +100,20 @@ class ExecutableStepAttributeTraitTest extends TestCase
 
         $this->assertSame([], $step->getConfiguration());
     }
+
+    #[Test]
+    public function resolveAttributeUsesStaticCacheForRepeatedCalls(): void
+    {
+        $step = new StepWithAttributeFixture();
+
+        // First call populates the cache
+        $code1 = $step->getCode();
+        // Second call must return identical result (from cache)
+        $code2 = $step->getCode();
+
+        $this->assertSame($code1, $code2);
+        $this->assertSame('etl.test.trait_step', $code2);
+    }
 }
 
 // ---------------------------------------------------------------------------

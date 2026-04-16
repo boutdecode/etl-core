@@ -15,6 +15,7 @@ use BoutDeCode\ETLCoreBundle\Run\Domain\Runner\DefaultPipelineRunner;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 final class DefaultPipelineRunnerTest extends TestCase
 {
@@ -209,6 +210,36 @@ final class DefaultPipelineRunnerTest extends TestCase
 
         $middlewareChain = new PipelineMiddlewareChain([]);
         $runner = new DefaultPipelineRunner($middlewareChain, $this->stepResolver);
+
+        // Act
+        $result = $runner->run($pipeline);
+
+        // Assert
+        $this->assertInstanceOf(Context::class, $result);
+    }
+
+    #[Test]
+    #[AllowMockObjectsWithoutExpectations]
+    public function runShouldLogWarningWhenStepCodeIsUnknown(): void
+    {
+        // Arrange
+        $step = $this->createMock(Step::class);
+        $step->method('getCode')->willReturn('unknown_code');
+
+        $this->stepResolver->method('resolve')->willReturn(null);
+
+        $pipeline = $this->createBasicPipelineMock([$step]);
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with(
+                $this->stringContains('{code}'),
+                $this->callback(fn (array $ctx) => ($ctx['code'] ?? null) === 'unknown_code'),
+            );
+
+        $middlewareChain = new PipelineMiddlewareChain([]);
+        $runner = new DefaultPipelineRunner($middlewareChain, $this->stepResolver, $logger);
 
         // Act
         $result = $runner->run($pipeline);
