@@ -27,7 +27,9 @@ final readonly class StepProcessMiddleware implements Middleware
             $stepName = $context->getCurrentStep()?->getName() ?? 'unknown';
 
             $context->setResult($stepName, [
-                'error' => $exception->getMessage() . ' file: ' . $exception->getFile() . ' line: ' . $exception->getLine(),
+                'error' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
             ]);
 
             $this->logger?->error("Step '{$stepName}' failed: {$exception->getMessage()}", $context, $exception);

@@ -24,7 +24,10 @@ final readonly class StepFailureMiddleware implements Middleware
         } catch (\Throwable $exception) {
             $stepName = $context->getCurrentStep()?->getCode() ?? 'unknown';
 
-            $this->logger?->error("Step '{$stepName}' CRITICAL: {$exception->getMessage()}", $context, $exception);
+            $this->logger?->error("Step '{$stepName}' CRITICAL: {$exception->getMessage()}", $context, $exception, [
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ]);
         }
 
         return $context;
