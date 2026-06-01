@@ -7,26 +7,53 @@ namespace BoutDeCode\ETLCoreBundle\Tests\Unit\Run\Infrastructure\Scheduler;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Data\Provider\PipelineProvider;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Step;
+use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command\Command;
 use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command\CommandBus;
 use BoutDeCode\ETLCoreBundle\Run\Application\Operation\Command\ExecuteWorkflowCommand;
-use BoutDeCode\ETLCoreBundle\Run\Infrastructure\Scheduler\PipelineScheduler;
+use BoutDeCode\ETLCoreBundle\Run\Infrastructure\Scheduler\Messenger\ExecutePipeline;
+use BoutDeCode\ETLCoreBundle\Run\Infrastructure\Scheduler\Messenger\ExecutePipelineHandler;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Spy implementation of CommandBus that accepts stamps as optional
+ * (the interface lacks a default but the concrete implementation has one).
+ */
+final class SpyCommandBus implements CommandBus
+{
+    /**
+     * @var list<Command>
+     */
+    public array $dispatched = [];
+
+    public ?\Throwable $throwOnDispatch = null;
+
+    public function dispatch(Command $command, array $stamps = []): mixed
+    {
+        if ($this->throwOnDispatch !== null) {
+            throw $this->throwOnDispatch;
+        }
+
+        $this->dispatched[] = $command;
+
+        return null;
+    }
+}
+
 class PipelineSchedulerTest extends TestCase
 {
-    private CommandBus $commandBus;
+    private SpyCommandBus $commandBus;
 
     private PipelineProvider $pipelineProvider;
 
-    private PipelineScheduler $scheduler;
+    private ExecutePipelineHandler $handler;
 
     protected function setUp(): void
     {
-        $this->commandBus = $this->createMock(CommandBus::class);
+        $this->commandBus = new SpyCommandBus();
         $this->pipelineProvider = $this->createMock(PipelineProvider::class);
-        $this->scheduler = new PipelineScheduler($this->commandBus, $this->pipelineProvider);
+        $this->handler = new ExecutePipelineHandler($this->commandBus, $this->pipelineProvider);
     }
 
     #[Test]
@@ -37,11 +64,9 @@ class PipelineSchedulerTest extends TestCase
             ->method('findScheduledPipelines')
             ->willReturn([]);
 
-        $this->commandBus
-            ->expects($this->never())
-            ->method('dispatch');
+        ($this->handler)(new ExecutePipeline());
 
-        $this->scheduler->__invoke();
+        $this->assertCount(0, $this->commandBus->dispatched);
     }
 
     #[Test]
@@ -55,14 +80,11 @@ class PipelineSchedulerTest extends TestCase
             ->method('findScheduledPipelines')
             ->willReturn([$pipeline]);
 
-        $this->commandBus
-            ->expects($this->once())
-            ->method('dispatch')
-            ->with($this->callback(function (ExecuteWorkflowCommand $command) use ($pipelineId) {
-                return $command->pipelineId === $pipelineId;
-            }));
+        ($this->handler)(new ExecutePipeline());
 
-        $this->scheduler->__invoke();
+        $this->assertCount(1, $this->commandBus->dispatched);
+        $this->assertInstanceOf(ExecuteWorkflowCommand::class, $this->commandBus->dispatched[0]);
+        $this->assertSame($pipelineId, $this->commandBus->dispatched[0]->pipelineId);
     }
 
     #[Test]
@@ -76,12 +98,13 @@ class PipelineSchedulerTest extends TestCase
             ->method('findScheduledPipelines')
             ->willReturn($pipelines);
 
-        $this->commandBus
-            ->expects($this->exactly(3))
-            ->method('dispatch')
-            ->with($this->isInstanceOf(ExecuteWorkflowCommand::class));
+        ($this->handler)(new ExecutePipeline());
 
-        $this->scheduler->__invoke();
+        $this->assertCount(3, $this->commandBus->dispatched);
+
+        foreach ($this->commandBus->dispatched as $command) {
+            $this->assertInstanceOf(ExecuteWorkflowCommand::class, $command);
+        }
     }
 
     #[Test]
@@ -90,25 +113,21 @@ class PipelineSchedulerTest extends TestCase
     {
         $pipelineIds = ['etl-daily-reports', 'data-sync-hourly'];
         $pipelines = array_map([$this, 'createPipelineWithId'], $pipelineIds);
-        $dispatchedCommands = [];
 
         $this->pipelineProvider
             ->method('findScheduledPipelines')
             ->willReturn($pipelines);
 
-        $this->commandBus
-            ->expects($this->exactly(2))
-            ->method('dispatch')
-            ->willReturnCallback(function (ExecuteWorkflowCommand $command) use (&$dispatchedCommands) {
-                $dispatchedCommands[] = $command->pipelineId;
-                return null;
-            });
+        ($this->handler)(new ExecutePipeline());
 
-        $this->scheduler->__invoke();
+        $dispatchedIds = array_map(
+            fn (Command $c) => $c instanceof ExecuteWorkflowCommand ? $c->pipelineId : '',
+            $this->commandBus->dispatched
+        );
 
-        $this->assertContains('etl-daily-reports', $dispatchedCommands);
-        $this->assertContains('data-sync-hourly', $dispatchedCommands);
-        $this->assertCount(2, $dispatchedCommands);
+        $this->assertContains('etl-daily-reports', $dispatchedIds);
+        $this->assertContains('data-sync-hourly', $dispatchedIds);
+        $this->assertCount(2, $dispatchedIds);
     }
 
     #[Test]
@@ -122,16 +141,13 @@ class PipelineSchedulerTest extends TestCase
             ->method('findScheduledPipelines')
             ->willReturn([$pipeline1, $pipeline2]);
 
-        $this->commandBus
-            ->expects($this->once()) // Only one call because first call throws exception
-            ->method('dispatch')
-            ->willThrowException(new \RuntimeException('Command failed'));
+        $this->commandBus->throwOnDispatch = new \RuntimeException('Command failed');
 
-        // The scheduler doesn't catch exceptions, so this should throw on first pipeline
+        // The handler doesn't catch exceptions, so this should throw on first pipeline
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Command failed');
 
-        $this->scheduler->__invoke();
+        ($this->handler)(new ExecutePipeline());
     }
 
     #[Test]
@@ -149,12 +165,9 @@ class PipelineSchedulerTest extends TestCase
             ->method('findScheduledPipelines')
             ->willReturn($pipelines);
 
-        $this->commandBus
-            ->expects($this->exactly($pipelineCount))
-            ->method('dispatch')
-            ->with($this->isInstanceOf(ExecuteWorkflowCommand::class));
+        ($this->handler)(new ExecutePipeline());
 
-        $this->scheduler->__invoke();
+        $this->assertCount($pipelineCount, $this->commandBus->dispatched);
     }
 
     #[Test]
@@ -169,52 +182,46 @@ class PipelineSchedulerTest extends TestCase
         ];
 
         $pipelines = array_map([$this, 'createPipelineWithId'], $specialIds);
-        $actualIds = [];
 
         $this->pipelineProvider
             ->method('findScheduledPipelines')
             ->willReturn($pipelines);
 
-        $this->commandBus
-            ->method('dispatch')
-            ->willReturnCallback(function (ExecuteWorkflowCommand $command) use (&$actualIds) {
-                $actualIds[] = $command->pipelineId;
-            });
+        ($this->handler)(new ExecutePipeline());
 
-        $this->scheduler->__invoke();
+        $actualIds = array_map(
+            fn (Command $c) => $c instanceof ExecuteWorkflowCommand ? $c->pipelineId : '',
+            $this->commandBus->dispatched
+        );
 
         $this->assertSame($specialIds, $actualIds);
     }
 
     #[Test]
     #[AllowMockObjectsWithoutExpectations]
-    public function itIsConfiguredAsCronTask(): void
+    public function itIsConfiguredAsMessageHandler(): void
     {
-        $reflection = new \ReflectionClass(PipelineScheduler::class);
-        $attributes = $reflection->getAttributes(\Symfony\Component\Scheduler\Attribute\AsCronTask::class);
+        $reflection = new \ReflectionClass(ExecutePipelineHandler::class);
+        $attributes = $reflection->getAttributes(\Symfony\Component\Messenger\Attribute\AsMessageHandler::class);
 
         $this->assertCount(1, $attributes);
-
-        $cronTask = $attributes[0]->newInstance();
-        $this->assertSame('* * * * *', $cronTask->expression);
     }
 
     #[Test]
     #[AllowMockObjectsWithoutExpectations]
     public function itIsReadonlyAndFinalClass(): void
     {
-        $reflection = new \ReflectionClass(PipelineScheduler::class);
+        $reflection = new \ReflectionClass(ExecutePipelineHandler::class);
 
         $this->assertTrue($reflection->isFinal());
         $this->assertTrue($reflection->isReadOnly());
     }
 
     /**
-     * Helper method to create a pipeline mock with getId method
+     * Helper method to create a pipeline stub with a given id
      */
     private function createPipelineWithId(string $id): Pipeline
     {
-        // Create an anonymous class that implements Pipeline and has getId method
         $pipeline = new class($id) implements Pipeline {
             public function __construct(
                 private string $id
@@ -226,7 +233,6 @@ class PipelineSchedulerTest extends TestCase
                 return $this->id;
             }
 
-            // Implement required Pipeline interface methods
             public function getCreatedAt(): \DateTimeImmutable
             {
                 return new \DateTimeImmutable();
@@ -290,6 +296,10 @@ class PipelineSchedulerTest extends TestCase
             }
 
             public function reset(): void
+            {
+            }
+
+            public function plan(\DateTimeImmutable $scheduledAt): void
             {
             }
         };

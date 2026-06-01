@@ -152,7 +152,8 @@ class StepProcessMiddlewareTest extends TestCase
 
         $errorResult = $context->getResultByKey('step');
         $this->assertIsArray($errorResult);
-        $this->assertStringContainsString('file:', $errorResult['error']);
-        $this->assertStringContainsString('line:', $errorResult['error']);
+        $this->assertSame('oops', $errorResult['error']);
+        $this->assertArrayHasKey('file', $errorResult);
+        $this->assertArrayHasKey('line', $errorResult);
     }
 }

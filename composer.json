@@ -8,6 +8,7 @@
     "keywords": ["symfony", "bundle", "etl", "pipeline", "cqs"],
     "require": {
         "php": ">=8.2",
+        "dragonmantank/cron-expression": "^3.6",
         "flow-php/etl": "~0.25.0",
         "flow-php/etl-adapter-csv": "~0.25.0",
         "flow-php/etl-adapter-json": "~0.25.0",

@@ -383,4 +383,8 @@ class TestPipeline implements Pipeline
     public function finish(): void
     {
     }
+
+    public function plan(\DateTimeImmutable $scheduledAt): void
+    {
+    }
 }

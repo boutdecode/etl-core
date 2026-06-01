@@ -6,5 +6,8 @@ namespace BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Query;
 
 interface QueryBus
 {
-    public function ask(Query $query): mixed;
+    /**
+     * @param array<\Symfony\Component\Messenger\Stamp\StampInterface> $stamps
+     */
+    public function ask(Query $query, array $stamps = []): mixed;
 }

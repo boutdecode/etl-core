@@ -52,4 +52,6 @@ interface Pipeline
     public function finish(): void;
 
     public function reset(): void;
+
+    public function plan(\DateTimeImmutable $scheduledAt): void;
 }

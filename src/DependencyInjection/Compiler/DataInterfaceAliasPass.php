@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\DependencyInjection\Compiler;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\Data\Persister\PipelinePersister;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Data\Persister\PlannedTaskPersister;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Data\Persister\StepPersister;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Data\Persister\WorkflowPersister;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Data\Provider\PipelineProvider;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Data\Provider\PlannedTaskProvider;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Data\Provider\WorkflowProvider;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Factory\PipelineFactory;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Factory\WorkflowFactory;
@@ -15,6 +17,7 @@ use BoutDeCode\ETLCoreBundle\Run\Domain\Data\Persister\PipelineHistoryPersister;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Data\Persister\StepHistoryPersister;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Factory\PipelineHistoryFactory;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Factory\StepHistoryFactory;
+use BoutDeCode\ETLCoreBundle\Run\Domain\Scheduler\ExpressionScheduler;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -29,6 +32,8 @@ final class DataInterfaceAliasPass implements CompilerPassInterface
         WorkflowPersister::class,
         PipelineProvider::class,
         PipelinePersister::class,
+        PlannedTaskProvider::class,
+        PlannedTaskPersister::class,
         StepPersister::class,
         PipelineHistoryPersister::class,
         StepHistoryPersister::class,
@@ -36,6 +41,7 @@ final class DataInterfaceAliasPass implements CompilerPassInterface
         WorkflowFactory::class,
         PipelineHistoryFactory::class,
         StepHistoryFactory::class,
+        ExpressionScheduler::class,
     ];
 
     public function process(ContainerBuilder $container): void

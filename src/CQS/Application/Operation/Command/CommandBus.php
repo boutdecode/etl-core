@@ -6,5 +6,8 @@ namespace BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command;
 
 interface CommandBus
 {
-    public function dispatch(Command $command): mixed;
+    /**
+     * @param array<\Symfony\Component\Messenger\Stamp\StampInterface> $stamps
+     */
+    public function dispatch(Command $command, array $stamps = []): mixed;
 }

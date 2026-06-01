@@ -6,6 +6,7 @@ namespace BoutDeCode\ETLCoreBundle\CQS\Infrastructure\Messenger;
 
 use BoutDeCode\ETLCoreBundle\CQS\Application\Exception\CommandHandlerException;
 use BoutDeCode\ETLCoreBundle\CQS\Application\Instrumentation\Logger;
+use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command\AsyncCommand;
 use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command\Command;
 use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command\CommandBus;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -24,15 +25,22 @@ class MessengerCommandBus implements CommandBus
     }
 
     /**
+     * @param array<\Symfony\Component\Messenger\Stamp\StampInterface> $stamps
+     *
      * @throws \Throwable
      */
-    public function dispatch(Command $command): mixed
+    public function dispatch(Command $command, array $stamps = []): mixed
     {
         $commandName = get_class($command);
         $this->logger->start($commandName, $command);
 
         try {
-            $response = $this->handle($command);
+            if ($command instanceof AsyncCommand) {
+                $this->messageBus->dispatch($command, $stamps);
+                $response = null;
+            } else {
+                $response = $this->handle($command, $stamps);
+            }
 
             $this->logger->success($commandName, $response, true);
 

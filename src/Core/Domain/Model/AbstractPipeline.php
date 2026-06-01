@@ -136,4 +136,9 @@ abstract class AbstractPipeline implements Pipeline
         $this->startedAt = null;
         $this->finishedAt = null;
     }
+
+    public function plan(\DateTimeImmutable $scheduledAt): void
+    {
+        $this->scheduledAt = $scheduledAt;
+    }
 }

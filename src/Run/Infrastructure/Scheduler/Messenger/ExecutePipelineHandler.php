@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace BoutDeCode\ETLCoreBundle\Run\Infrastructure\Scheduler;
+namespace BoutDeCode\ETLCoreBundle\Run\Infrastructure\Scheduler\Messenger;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\Data\Provider\PipelineProvider;
 use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command\CommandBus;
 use BoutDeCode\ETLCoreBundle\Run\Application\Operation\Command\ExecuteWorkflowCommand;
-use Symfony\Component\Scheduler\Attribute\AsCronTask;
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
-#[AsCronTask(expression: '* * * * *', schedule: 'etl')]
-final readonly class PipelineScheduler
+#[AsMessageHandler]
+final readonly class ExecutePipelineHandler
 {
     public function __construct(
         private CommandBus $bus,
@@ -18,7 +18,7 @@ final readonly class PipelineScheduler
     ) {
     }
 
-    public function __invoke(): void
+    public function __invoke(ExecutePipeline $message): void
     {
         $pipelines = $this->pipelineProvider->findScheduledPipelines();
 

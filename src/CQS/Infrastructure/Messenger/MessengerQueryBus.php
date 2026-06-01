@@ -24,15 +24,17 @@ final class MessengerQueryBus implements QueryBus
     }
 
     /**
+     * @param array<\Symfony\Component\Messenger\Stamp\StampInterface> $stamps
+     *
      * @throws \Throwable
      */
-    public function ask(Query $query): mixed
+    public function ask(Query $query, array $stamps = []): mixed
     {
         $queryName = get_class($query);
         $this->logger?->start($queryName, $query);
 
         try {
-            $response = $this->handle($query);
+            $response = $this->handle($query, $stamps);
 
             $this->logger?->success($queryName, $response, true);
 

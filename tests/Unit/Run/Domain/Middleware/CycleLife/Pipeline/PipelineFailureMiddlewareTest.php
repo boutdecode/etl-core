@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\Run\Domain\Middleware\CycleLife\Pipeline;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Instrumentation\Logger;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Pipeline\PipelineFailureMiddleware;
+use BoutDeCode\ETLCoreBundle\Run\Domain\Workflow\PipelineWorkflow;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +19,8 @@ class PipelineFailureMiddlewareTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function processShouldCallNextAndReturnResult(): void
     {
-        $middleware = new PipelineFailureMiddleware();
+        $workflow = $this->createMock(PipelineWorkflow::class);
+        $middleware = new PipelineFailureMiddleware($workflow);
         $context = new Context('input');
 
         $result = $middleware->process($context, fn (Context $ctx) => $ctx);
@@ -29,7 +32,8 @@ class PipelineFailureMiddlewareTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function processShouldReturnNextResult(): void
     {
-        $middleware = new PipelineFailureMiddleware();
+        $workflow = $this->createMock(PipelineWorkflow::class);
+        $middleware = new PipelineFailureMiddleware($workflow);
         $context = new Context('input');
         $other = new Context('other');
 
@@ -42,8 +46,10 @@ class PipelineFailureMiddlewareTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function processShouldCatchThrowableAndReturnContext(): void
     {
-        $middleware = new PipelineFailureMiddleware();
+        $workflow = $this->createMock(PipelineWorkflow::class);
+        $middleware = new PipelineFailureMiddleware($workflow);
         $context = new Context('input');
+        $context->setPipeline($this->createMock(Pipeline::class));
 
         $result = $middleware->process($context, function (): never {
             throw new \RuntimeException('Something went wrong');
@@ -55,9 +61,11 @@ class PipelineFailureMiddlewareTest extends TestCase
     #[Test]
     public function processShouldLogErrorWhenExceptionIsThrownAndLoggerIsProvided(): void
     {
+        $workflow = $this->createMock(PipelineWorkflow::class);
         $logger = $this->createMock(Logger::class);
-        $middleware = new PipelineFailureMiddleware($logger);
+        $middleware = new PipelineFailureMiddleware($workflow, $logger);
         $context = new Context('input');
+        $context->setPipeline($this->createMock(Pipeline::class));
         $exception = new \RuntimeException('boom');
 
         $logger->expects($this->once())
@@ -77,7 +85,8 @@ class PipelineFailureMiddlewareTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function processShouldNotLogWhenNoExceptionAndNoLogger(): void
     {
-        $middleware = new PipelineFailureMiddleware();
+        $workflow = $this->createMock(PipelineWorkflow::class);
+        $middleware = new PipelineFailureMiddleware($workflow);
         $context = new Context('input');
         $called = false;
 
@@ -93,10 +102,11 @@ class PipelineFailureMiddlewareTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function processShouldNotLogWhenNoExceptionButLoggerIsProvided(): void
     {
+        $workflow = $this->createMock(PipelineWorkflow::class);
         $logger = $this->createMock(Logger::class);
         $logger->expects($this->never())->method('error');
 
-        $middleware = new PipelineFailureMiddleware($logger);
+        $middleware = new PipelineFailureMiddleware($workflow, $logger);
         $context = new Context('input');
 
         $middleware->process($context, fn (Context $ctx) => $ctx);
@@ -106,8 +116,10 @@ class PipelineFailureMiddlewareTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function processShouldCatchErrorThrowable(): void
     {
-        $middleware = new PipelineFailureMiddleware();
+        $workflow = $this->createMock(PipelineWorkflow::class);
+        $middleware = new PipelineFailureMiddleware($workflow);
         $context = new Context('input');
+        $context->setPipeline($this->createMock(Pipeline::class));
 
         $result = $middleware->process($context, function (): never {
             throw new \Error('Fatal error');

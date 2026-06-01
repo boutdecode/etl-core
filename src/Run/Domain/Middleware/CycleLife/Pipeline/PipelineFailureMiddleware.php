@@ -29,7 +29,11 @@ final readonly class PipelineFailureMiddleware implements Middleware
                 'line' => $exception->getLine(),
             ]);
 
-            $this->pipelineWorkflow->fail($context->getPipeline(), $exception);
+            $pipeline = $context->getPipeline();
+
+            if ($pipeline !== null) {
+                $this->pipelineWorkflow->fail($pipeline, $exception);
+            }
         }
 
         return $context;
