@@ -309,6 +309,11 @@ class TestPipeline implements Pipeline
         return 'test-pipeline-id';
     }
 
+    public function getName(): ?string
+    {
+        return null;
+    }
+
     public function setRunnableSteps(iterable $runnableSteps): void
     {
         $this->runnableSteps = $runnableSteps instanceof \Traversable

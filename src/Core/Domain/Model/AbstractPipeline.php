@@ -8,6 +8,8 @@ use BoutDeCode\ETLCoreBundle\Core\Domain\Enum\PipelineStatus;
 
 abstract class AbstractPipeline implements Pipeline
 {
+    protected ?string $name = null;
+
     protected \DateTimeImmutable $createdAt;
 
     protected ?\DateTimeImmutable $scheduledAt;
@@ -41,6 +43,11 @@ abstract class AbstractPipeline implements Pipeline
     protected array $input = [];
 
     abstract public function getId(): string;
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
 
     public function getCreatedAt(): \DateTimeImmutable
     {

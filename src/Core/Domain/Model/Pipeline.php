@@ -10,6 +10,8 @@ interface Pipeline
 {
     public function getId(): string;
 
+    public function getName(): ?string;
+
     public function getCreatedAt(): \DateTimeImmutable;
 
     public function getScheduledAt(): ?\DateTimeImmutable;

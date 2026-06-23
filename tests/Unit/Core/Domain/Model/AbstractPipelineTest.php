@@ -22,6 +22,12 @@ class AbstractPipelineTest extends TestCase
     }
 
     #[Test]
+    public function getNameShouldReturnNullByDefault(): void
+    {
+        $this->assertNull($this->pipeline->getName());
+    }
+
+    #[Test]
     public function getCreatedAtShouldReturnCreatedDate(): void
     {
         $createdAt = $this->pipeline->getCreatedAt();
@@ -150,6 +156,7 @@ class TestPipeline extends AbstractPipeline
 {
     public function __construct()
     {
+        $this->name = null;
         $this->createdAt = new \DateTimeImmutable();
         $this->scheduledAt = null;
         $this->startedAt = null;

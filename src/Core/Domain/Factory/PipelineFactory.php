@@ -15,6 +15,7 @@ interface PipelineFactory
      * @param array<string, mixed> $configuration
      */
     public function create(
+        ?string $name = null,
         array $steps = [],
         array $configuration = []
     ): Pipeline;
@@ -36,6 +37,7 @@ interface PipelineFactory
      */
     public function createFromWorkflow(
         Workflow $workflow,
+        ?string $name = null,
         array $overrideConfiguration = [],
         array $input = [],
     ): Pipeline;

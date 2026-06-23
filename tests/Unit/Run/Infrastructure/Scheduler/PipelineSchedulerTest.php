@@ -233,6 +233,11 @@ class PipelineSchedulerTest extends TestCase
                 return $this->id;
             }
 
+            public function getName(): ?string
+            {
+                return null;
+            }
+
             public function getCreatedAt(): \DateTimeImmutable
             {
                 return new \DateTimeImmutable();

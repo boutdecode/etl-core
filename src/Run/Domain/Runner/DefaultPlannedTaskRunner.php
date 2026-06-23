@@ -22,8 +22,10 @@ final readonly class DefaultPlannedTaskRunner implements PlannedTaskRunner
 
     public function run(PlannedTask $plannedTask): void
     {
+        $workflow = $plannedTask->getWorkflow();
         $pipeline = $this->pipelineFactory->createFromWorkflow(
-            $plannedTask->getWorkflow(),
+            $workflow,
+            sprintf('%s pipeline', $workflow->getName()),
             $plannedTask->getConfiguration(),
             $plannedTask->getInput(),
         );
