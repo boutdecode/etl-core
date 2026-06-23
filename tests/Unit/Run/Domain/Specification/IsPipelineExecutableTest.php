@@ -22,10 +22,22 @@ class IsPipelineExecutableTest extends TestCase
 
     #[Test]
     #[AllowMockObjectsWithoutExpectations]
-    public function isSatisfiedByShouldReturnTrueForPendingPipeline(): void
+    public function isSatisfiedByShouldReturnFalseForPendingPipeline(): void
     {
         $pipeline = $this->createMock(Pipeline::class);
         $pipeline->method('getStatus')->willReturn(PipelineStatus::PENDING);
+
+        $result = $this->specification->isSatisfiedBy($pipeline);
+
+        $this->assertFalse($result);
+    }
+
+    #[Test]
+    #[AllowMockObjectsWithoutExpectations]
+    public function isSatisfiedByShouldReturnTrueForScheduledPipeline(): void
+    {
+        $pipeline = $this->createMock(Pipeline::class);
+        $pipeline->method('getStatus')->willReturn(PipelineStatus::SCHEDULED);
 
         $result = $this->specification->isSatisfiedBy($pipeline);
 

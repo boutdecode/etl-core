@@ -11,6 +11,6 @@ class IsPipelineExecutable implements IsPipelineExecutableSpecification
 {
     public function isSatisfiedBy(Pipeline $pipeline): bool
     {
-        return $pipeline->getStatus() === PipelineStatus::PENDING;
+        return $pipeline->getStatus() === PipelineStatus::SCHEDULED;
     }
 }

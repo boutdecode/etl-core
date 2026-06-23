@@ -10,6 +10,7 @@ use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Step;
 use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command\Command;
 use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command\CommandBus;
 use BoutDeCode\ETLCoreBundle\Run\Application\Operation\Command\ExecuteWorkflowCommand;
+use BoutDeCode\ETLCoreBundle\Run\Domain\Workflow\PipelineWorkflow;
 use BoutDeCode\ETLCoreBundle\Run\Infrastructure\Scheduler\Messenger\ExecutePipeline;
 use BoutDeCode\ETLCoreBundle\Run\Infrastructure\Scheduler\Messenger\ExecutePipelineHandler;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
@@ -47,13 +48,37 @@ class PipelineSchedulerTest extends TestCase
 
     private PipelineProvider $pipelineProvider;
 
+    private PipelineWorkflow $pipelineWorkflow;
+
     private ExecutePipelineHandler $handler;
 
     protected function setUp(): void
     {
         $this->commandBus = new SpyCommandBus();
         $this->pipelineProvider = $this->createMock(PipelineProvider::class);
-        $this->handler = new ExecutePipelineHandler($this->commandBus, $this->pipelineProvider);
+        $this->pipelineWorkflow = $this->createMock(PipelineWorkflow::class);
+        $this->handler = new ExecutePipelineHandler($this->commandBus, $this->pipelineProvider, $this->pipelineWorkflow);
+    }
+
+    #[Test]
+    public function itSchedulesPipelineBeforeDispatchingCommand(): void
+    {
+        $pipelineId = 'pipeline-to-schedule';
+        $pipeline = $this->createMock(Pipeline::class);
+        $pipeline->method('getId')->willReturn($pipelineId);
+
+        $this->pipelineProvider
+            ->method('findScheduledPipelines')
+            ->willReturn([$pipeline]);
+
+        $this->pipelineWorkflow
+            ->expects($this->once())
+            ->method('schedule')
+            ->with($pipeline);
+
+        ($this->handler)(new ExecutePipeline());
+
+        $this->assertCount(1, $this->commandBus->dispatched);
     }
 
     #[Test]
@@ -290,6 +315,10 @@ class PipelineSchedulerTest extends TestCase
             public function getStepFromRunnableStep(Step $runnableStep): ?Step
             {
                 return null;
+            }
+
+            public function schedule(): void
+            {
             }
 
             public function start(): void

@@ -49,6 +49,8 @@ interface Pipeline
      */
     public function getInput(): array;
 
+    public function schedule(): void;
+
     public function start(): void;
 
     public function finish(): void;

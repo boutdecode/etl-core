@@ -15,6 +15,13 @@ final readonly class PipelineStateMachine implements PipelineWorkflow
     ) {
     }
 
+    public function schedule(Pipeline $pipeline): void
+    {
+        $pipeline->schedule();
+
+        $this->pipelineLifecycleStateMachine->apply($pipeline, 'schedule');
+    }
+
     public function start(Pipeline $pipeline): void
     {
         $pipeline->start();

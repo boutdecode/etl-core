@@ -127,6 +127,13 @@ abstract class AbstractPipeline implements Pipeline
         return $this->workflow;
     }
 
+    public function schedule(): void
+    {
+        if ($this->scheduledAt === null) {
+            $this->scheduledAt = new \DateTimeImmutable();
+        }
+    }
+
     public function start(): void
     {
         $this->startedAt = new \DateTimeImmutable();

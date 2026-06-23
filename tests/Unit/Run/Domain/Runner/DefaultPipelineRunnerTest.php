@@ -377,6 +377,10 @@ class TestPipeline implements Pipeline
         return null;
     }
 
+    public function schedule(): void
+    {
+    }
+
     public function reset(): void
     {
     }

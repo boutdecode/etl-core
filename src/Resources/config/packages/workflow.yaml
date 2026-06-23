@@ -12,12 +12,16 @@ framework:
             initial_marking: pending
             places:
                 - pending
+                - scheduled
                 - in_progress
                 - completed
                 - failed
             transitions:
-                start:
+                schedule:
                     from: pending
+                    to: scheduled
+                start:
+                    from: scheduled
                     to: in_progress
                 complete:
                     from: in_progress
@@ -26,7 +30,7 @@ framework:
                     from: in_progress
                     to: failed
                 reset:
-                    from: [completed, failed]
+                    from: [scheduled, completed, failed]
                     to: pending
                 restart:
                     from: failed

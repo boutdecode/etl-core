@@ -7,6 +7,7 @@ namespace BoutDeCode\ETLCoreBundle\Core\Domain\Enum;
 enum PipelineStatus: string
 {
     case PENDING = 'pending';
+    case SCHEDULED = 'scheduled';
     case IN_PROGRESS = 'in_progress';
     case COMPLETED = 'completed';
     case FAILED = 'failed';

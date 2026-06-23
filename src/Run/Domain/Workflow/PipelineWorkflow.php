@@ -8,6 +8,8 @@ use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline;
 
 interface PipelineWorkflow
 {
+    public function schedule(Pipeline $pipeline): void;
+
     public function start(Pipeline $pipeline): void;
 
     public function complete(Pipeline $pipeline): void;

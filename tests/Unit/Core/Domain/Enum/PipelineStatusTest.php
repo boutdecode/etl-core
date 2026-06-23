@@ -14,6 +14,7 @@ class PipelineStatusTest extends TestCase
     public function enumShouldHaveCorrectValues(): void
     {
         $this->assertSame('pending', PipelineStatus::PENDING->value);
+        $this->assertSame('scheduled', PipelineStatus::SCHEDULED->value);
         $this->assertSame('in_progress', PipelineStatus::IN_PROGRESS->value);
         $this->assertSame('completed', PipelineStatus::COMPLETED->value);
         $this->assertSame('failed', PipelineStatus::FAILED->value);
@@ -23,6 +24,7 @@ class PipelineStatusTest extends TestCase
     public function fromShouldCreateEnumFromString(): void
     {
         $this->assertSame(PipelineStatus::PENDING, PipelineStatus::from('pending'));
+        $this->assertSame(PipelineStatus::SCHEDULED, PipelineStatus::from('scheduled'));
         $this->assertSame(PipelineStatus::IN_PROGRESS, PipelineStatus::from('in_progress'));
         $this->assertSame(PipelineStatus::COMPLETED, PipelineStatus::from('completed'));
         $this->assertSame(PipelineStatus::FAILED, PipelineStatus::from('failed'));
@@ -52,8 +54,9 @@ class PipelineStatusTest extends TestCase
     {
         $cases = PipelineStatus::cases();
 
-        $this->assertCount(4, $cases);
+        $this->assertCount(5, $cases);
         $this->assertContains(PipelineStatus::PENDING, $cases);
+        $this->assertContains(PipelineStatus::SCHEDULED, $cases);
         $this->assertContains(PipelineStatus::IN_PROGRESS, $cases);
         $this->assertContains(PipelineStatus::COMPLETED, $cases);
         $this->assertContains(PipelineStatus::FAILED, $cases);

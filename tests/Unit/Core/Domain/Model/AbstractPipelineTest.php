@@ -85,6 +85,33 @@ class AbstractPipelineTest extends TestCase
     }
 
     #[Test]
+    public function scheduleShouldSetScheduledAtWhenNull(): void
+    {
+        $this->assertNull($this->pipeline->getScheduledAt());
+
+        $before = new \DateTimeImmutable();
+        $this->pipeline->schedule();
+        $after = new \DateTimeImmutable();
+
+        $scheduledAt = $this->pipeline->getScheduledAt();
+
+        $this->assertNotNull($scheduledAt);
+        $this->assertGreaterThanOrEqual($before, $scheduledAt);
+        $this->assertLessThanOrEqual($after, $scheduledAt);
+    }
+
+    #[Test]
+    public function scheduleShouldNotOverrideExistingScheduledAt(): void
+    {
+        $originalDate = new \DateTimeImmutable('2026-01-01 00:00:00');
+        $this->pipeline->plan($originalDate);
+
+        $this->pipeline->schedule();
+
+        $this->assertSame($originalDate, $this->pipeline->getScheduledAt());
+    }
+
+    #[Test]
     public function startShouldSetStartedAtTime(): void
     {
         $beforeStart = new \DateTimeImmutable();
