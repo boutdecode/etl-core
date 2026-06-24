@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\Statistics\Infrastructure\Middleware;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\Run\Domain\Enum\PipelineHistoryStatusEnum;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\Middleware;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\PipelineExecutionStatisticPersister;
 use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\PipelineStatisticPersister;
 use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Provider\PipelineStatisticProvider;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\PipelineExecutionStatisticFactory;
 use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\PipelineStatisticFactory;
 
 final readonly class PipelineStatisticMiddleware implements Middleware
@@ -16,6 +19,8 @@ final readonly class PipelineStatisticMiddleware implements Middleware
         private PipelineStatisticProvider $pipelineStatisticProvider,
         private PipelineStatisticFactory $pipelineStatisticFactory,
         private PipelineStatisticPersister $pipelineStatisticPersister,
+        private PipelineExecutionStatisticFactory $pipelineExecutionStatisticFactory,
+        private PipelineExecutionStatisticPersister $pipelineExecutionStatisticPersister,
     ) {
     }
 
@@ -36,6 +41,8 @@ final readonly class PipelineStatisticMiddleware implements Middleware
             ? (float) ($finishedAt->getTimestamp() - $startedAt->getTimestamp())
             : 0.0;
 
+        $hasErrors = (bool) $context->getErrors();
+
         $statistic = $this->pipelineStatisticProvider->findByPipeline($pipeline);
         $isNew = $statistic === null;
 
@@ -43,7 +50,7 @@ final readonly class PipelineStatisticMiddleware implements Middleware
             $statistic = $this->pipelineStatisticFactory->create($pipeline);
         }
 
-        if ($context->getErrors()) {
+        if ($hasErrors) {
             $statistic->recordFailure($durationSeconds);
         } else {
             $statistic->recordSuccess($durationSeconds);
@@ -54,6 +61,14 @@ final readonly class PipelineStatisticMiddleware implements Middleware
         } else {
             $this->pipelineStatisticPersister->save($statistic);
         }
+
+        $execution = $this->pipelineExecutionStatisticFactory->create(
+            $pipeline,
+            $hasErrors ? PipelineHistoryStatusEnum::FAILED : PipelineHistoryStatusEnum::COMPLETED,
+            $startedAt ?? new \DateTimeImmutable(),
+            $finishedAt,
+        );
+        $this->pipelineExecutionStatisticPersister->create($execution);
 
         /** @var Context $result */
         $result = $next($context);

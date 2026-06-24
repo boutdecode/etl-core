@@ -6,9 +6,12 @@ namespace BoutDeCode\ETLCoreBundle\Tests\Unit\Statistics\Infrastructure\Middlewa
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\PipelineExecutionStatisticPersister;
 use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\PipelineStatisticPersister;
 use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Provider\PipelineStatisticProvider;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\PipelineExecutionStatisticFactory;
 use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\PipelineStatisticFactory;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\PipelineExecutionStatistic;
 use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\PipelineStatistic;
 use BoutDeCode\ETLCoreBundle\Statistics\Infrastructure\Middleware\PipelineStatisticMiddleware;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
@@ -23,6 +26,10 @@ class PipelineStatisticMiddlewareTest extends TestCase
 
     private PipelineStatisticPersister $persister;
 
+    private PipelineExecutionStatisticFactory $executionFactory;
+
+    private PipelineExecutionStatisticPersister $executionPersister;
+
     private PipelineStatisticMiddleware $middleware;
 
     protected function setUp(): void
@@ -30,10 +37,19 @@ class PipelineStatisticMiddlewareTest extends TestCase
         $this->provider = $this->createMock(PipelineStatisticProvider::class);
         $this->factory = $this->createMock(PipelineStatisticFactory::class);
         $this->persister = $this->createMock(PipelineStatisticPersister::class);
+        $this->executionFactory = $this->createMock(PipelineExecutionStatisticFactory::class);
+        $this->executionPersister = $this->createMock(PipelineExecutionStatisticPersister::class);
+
+        $executionStatistic = $this->createMock(PipelineExecutionStatistic::class);
+        $this->executionFactory->method('create')->willReturn($executionStatistic);
+        $this->executionPersister->method('create')->willReturnArgument(0);
+
         $this->middleware = new PipelineStatisticMiddleware(
             $this->provider,
             $this->factory,
             $this->persister,
+            $this->executionFactory,
+            $this->executionPersister,
         );
     }
 
