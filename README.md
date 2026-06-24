@@ -130,6 +130,7 @@ The bundle provides abstract base classes to extend and interfaces to implement:
 | `Pipeline` entity | `AbstractPipeline` | — |
 | `StepHistory` entity | `AbstractStepHistory` | — |
 | `PipelineHistory` entity | `AbstractPipelineHistory` | — |
+| `PipelineStatistic` entity | `AbstractPipelineStatistic` | — |
 
 Each abstract class holds all the typed properties and method implementations. The only thing left to add in the concrete entity is:
 - A Doctrine `#[ORM\Entity]` / `#[ORM\Table]` mapping.
@@ -390,6 +391,67 @@ class PipelineHistory extends AbstractPipelineHistory
 }
 ```
 
+```php
+// src/Entity/PipelineStatistic.php
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\AbstractPipelineStatistic;
+use BoutDeCode\ETLCoreBundle\Run\Domain\Enum\PipelineHistoryStatusEnum;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline as PipelineInterface;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
+
+#[ORM\Entity]
+#[ORM\Table(name: 'pipeline_statistic')]
+class PipelineStatistic extends AbstractPipelineStatistic
+{
+    #[ORM\Id]
+    #[ORM\Column(type: 'uuid', unique: true)]
+    private string $id;
+
+    #[ORM\ManyToOne(targetEntity: Pipeline::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    protected PipelineInterface $pipeline;
+
+    #[ORM\Column]
+    protected int $totalCount = 0;
+
+    #[ORM\Column]
+    protected int $successCount = 0;
+
+    #[ORM\Column]
+    protected int $failureCount = 0;
+
+    #[ORM\Column(type: 'float')]
+    protected float $totalDurationSeconds = 0.0;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    protected ?float $minDurationSeconds = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    protected ?float $maxDurationSeconds = null;
+
+    #[ORM\Column(nullable: true)]
+    protected ?\DateTimeImmutable $lastRunAt = null;
+
+    #[ORM\Column(enumType: PipelineHistoryStatusEnum::class, nullable: true)]
+    protected ?PipelineHistoryStatusEnum $lastRunStatus = null;
+
+    #[ORM\Column]
+    protected \DateTimeImmutable $updatedAt;
+
+    public function __construct(PipelineInterface $pipeline)
+    {
+        $this->id = (string) Uuid::v7();
+        $this->pipeline = $pipeline;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
+    }
+}
+```
+
 ### Migrations
 
 Once all entities are created, generate and run the Doctrine migrations:
@@ -418,7 +480,8 @@ src/
 ├── Core/                           # Central domain (Pipeline, Step, Context)
 ├── ETL/                            # ETL logic (Extract, Transform, Load)
 ├── Run/                            # Execution engine & middleware
-└── CQS/                            # Command / Query Separation
+├── CQS/                            # Command / Query Separation
+└── Statistics/                     # Pre-aggregated pipeline execution statistics
 ```
 
 ### Key patterns
@@ -815,12 +878,74 @@ Built-in middleware priority reference:
 | `PipelineFailureMiddleware` | pipeline | 1 |
 | `PipelineProcessMiddleware` | pipeline | 0 |
 | `PipelineHistoryMiddleware` | pipeline | -50 |
+| `PipelineStatisticMiddleware` | pipeline | -60 |
 | `PipelineSuccessMiddleware` | pipeline | -100 |
 | `StepStartMiddleware` | step | 100 |
 | `StepFailureMiddleware` | step | 1 |
 | `StepProcessMiddleware` | step | 0 |
 | `StepHistoryMiddleware` | step | -50 |
 | `StepSuccessMiddleware` | step | -100 |
+
+---
+
+## Statistics
+
+The bundle tracks pre-aggregated execution statistics per pipeline. After each run, `PipelineStatisticMiddleware` (priority -60) automatically updates a `PipelineStatistic` record with counters and timing data.
+
+### What is tracked
+
+| Field | Description |
+|---|---|
+| `totalCount` | Total number of executions |
+| `successCount` / `failureCount` | Executions by outcome |
+| `totalDurationSeconds` | Cumulative execution time (seconds) |
+| `minDurationSeconds` / `maxDurationSeconds` | Fastest / slowest run |
+| `getAverageDurationSeconds()` | Computed: total / count |
+| `getSuccessRate()` | Computed: success / total (0.0–1.0) |
+| `lastRunAt` | Timestamp of the most recent run |
+| `lastRunStatus` | Outcome of the most recent run |
+
+### Interfaces to implement
+
+Four interfaces must be provided by the consuming application (same pattern as Pipeline/Workflow):
+
+| Interface | Role |
+|---|---|
+| `PipelineStatisticFactory` | Creates a fresh `PipelineStatistic` (all counters at 0) for a given pipeline |
+| `PipelineStatisticProvider` | `findByPipeline()` and `findAll()` |
+| `PipelineStatisticPersister` | `create()` (first save) and `save()` (update) |
+| `PipelineHistoryProvider` | `findByPipeline()` and `findByPipelineBetween()` for raw history queries |
+
+`DataInterfaceAliasPass` registers their aliases automatically.
+
+### Querying statistics
+
+Two built-in query handlers are available via the `QueryBus`:
+
+```php
+use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Query\QueryBus;
+use BoutDeCode\ETLCoreBundle\Statistics\Application\Operation\Query\GetPipelineStatisticQuery;
+use BoutDeCode\ETLCoreBundle\Statistics\Application\Operation\Query\GetPipelineHistoriesQuery;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\PipelineStatistic;
+
+// Aggregated stats for one pipeline
+/** @var PipelineStatistic|null $stat */
+$stat = $this->queryBus->dispatch(new GetPipelineStatisticQuery($pipelineId));
+
+if ($stat !== null) {
+    echo $stat->getTotalCount();               // total runs
+    echo $stat->getSuccessRate() * 100 . '%';  // e.g. "87.5%"
+    echo $stat->getAverageDurationSeconds();   // avg seconds
+    echo $stat->getLastRunAt()->format('c');   // ISO 8601
+}
+
+// Raw history over a period (for temporal trend)
+$histories = $this->queryBus->dispatch(new GetPipelineHistoriesQuery(
+    pipelineId: $pipelineId,
+    from: new \DateTimeImmutable('2026-01-01'),
+    to:   new \DateTimeImmutable('2026-01-31'),
+));
+```
 
 ---
 
@@ -837,7 +962,7 @@ composer test:unit
 composer test:integration
 ```
 
-Current status: **394 unit tests, 3 integration tests — all passing**.
+Current status: **519 unit tests, 3 integration tests — all passing**.
 
 ---
 

@@ -56,6 +56,10 @@ services:
         tags:
             - { name: 'boutdecode_etl_core.pipeline_middleware', priority: -50 }
 
+    BoutDeCode\ETLCoreBundle\Statistics\Infrastructure\Middleware\PipelineStatisticMiddleware:
+        tags:
+            - { name: 'boutdecode_etl_core.pipeline_middleware', priority: -60 }
+
     BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Pipeline\PipelineSuccessMiddleware:
         tags:
             - { name: 'boutdecode_etl_core.pipeline_middleware', priority: -100 }

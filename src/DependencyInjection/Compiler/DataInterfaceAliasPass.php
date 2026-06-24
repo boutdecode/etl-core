@@ -15,9 +15,13 @@ use BoutDeCode\ETLCoreBundle\Core\Domain\Factory\PipelineFactory;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Factory\WorkflowFactory;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Data\Persister\PipelineHistoryPersister;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Data\Persister\StepHistoryPersister;
+use BoutDeCode\ETLCoreBundle\Run\Domain\Data\Provider\PipelineHistoryProvider;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Factory\PipelineHistoryFactory;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Factory\StepHistoryFactory;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Scheduler\ExpressionScheduler;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\PipelineStatisticPersister;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Provider\PipelineStatisticProvider;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\PipelineStatisticFactory;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -37,11 +41,15 @@ final class DataInterfaceAliasPass implements CompilerPassInterface
         StepPersister::class,
         PipelineHistoryPersister::class,
         StepHistoryPersister::class,
+        PipelineHistoryProvider::class,
         PipelineFactory::class,
         WorkflowFactory::class,
         PipelineHistoryFactory::class,
         StepHistoryFactory::class,
         ExpressionScheduler::class,
+        PipelineStatisticProvider::class,
+        PipelineStatisticPersister::class,
+        PipelineStatisticFactory::class,
     ];
 
     public function process(ContainerBuilder $container): void
