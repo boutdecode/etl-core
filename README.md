@@ -131,6 +131,7 @@ The bundle provides abstract base classes to extend and interfaces to implement:
 | `StepHistory` entity | `AbstractStepHistory` | — |
 | `PipelineHistory` entity | `AbstractPipelineHistory` | — |
 | `PipelineStatistic` entity | `AbstractPipelineStatistic` | — |
+| `PipelineExecutionStatistic` entity | `AbstractPipelineExecutionStatistic` | — |
 
 Each abstract class holds all the typed properties and method implementations. The only thing left to add in the concrete entity is:
 - A Doctrine `#[ORM\Entity]` / `#[ORM\Table]` mapping.
@@ -443,6 +444,55 @@ class PipelineStatistic extends AbstractPipelineStatistic
         $this->id = (string) Uuid::v7();
         $this->pipeline = $pipeline;
         $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
+    }
+}
+```
+
+```php
+// src/Entity/PipelineExecutionStatistic.php
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\AbstractPipelineExecutionStatistic;
+use BoutDeCode\ETLCoreBundle\Run\Domain\Enum\PipelineHistoryStatusEnum;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline as PipelineInterface;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
+
+#[ORM\Entity]
+#[ORM\Table(name: 'pipeline_execution_statistic')]
+class PipelineExecutionStatistic extends AbstractPipelineExecutionStatistic
+{
+    #[ORM\Id]
+    #[ORM\Column(type: 'uuid', unique: true)]
+    private string $id;
+
+    #[ORM\ManyToOne(targetEntity: Pipeline::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    protected PipelineInterface $pipeline;
+
+    #[ORM\Column(enumType: PipelineHistoryStatusEnum::class)]
+    protected PipelineHistoryStatusEnum $status;
+
+    #[ORM\Column]
+    protected \DateTimeImmutable $startedAt;
+
+    #[ORM\Column]
+    protected \DateTimeImmutable $finishedAt;
+
+    public function __construct(
+        PipelineInterface $pipeline,
+        PipelineHistoryStatusEnum $status,
+        \DateTimeImmutable $startedAt,
+        \DateTimeImmutable $finishedAt,
+    ) {
+        $this->id = (string) Uuid::v7();
+        $this->pipeline = $pipeline;
+        $this->status = $status;
+        $this->startedAt = $startedAt;
+        $this->finishedAt = $finishedAt;
     }
 
     public function getId(): string
@@ -890,9 +940,11 @@ Built-in middleware priority reference:
 
 ## Statistics
 
-The bundle tracks pre-aggregated execution statistics per pipeline. After each run, `PipelineStatisticMiddleware` (priority -60) automatically updates a `PipelineStatistic` record with counters and timing data.
+The bundle tracks two complementary views of pipeline execution. After each run, `PipelineStatisticMiddleware` (priority -60) automatically updates both records.
 
-### What is tracked
+### `PipelineStatistic` — pre-aggregated counters
+
+One record per pipeline, updated in-place after every run.
 
 | Field | Description |
 |---|---|
@@ -905,15 +957,30 @@ The bundle tracks pre-aggregated execution statistics per pipeline. After each r
 | `lastRunAt` | Timestamp of the most recent run |
 | `lastRunStatus` | Outcome of the most recent run |
 
+### `PipelineExecutionStatistic` — individual execution log
+
+One record per run, append-only. Stores the raw event for temporal queries.
+
+| Field | Description |
+|---|---|
+| `pipeline` | Reference to the pipeline |
+| `status` | `COMPLETED` or `FAILED` |
+| `startedAt` | Execution start timestamp |
+| `finishedAt` | Execution end timestamp |
+| `getDurationSeconds()` | Computed: `finishedAt - startedAt` |
+
 ### Interfaces to implement
 
-Four interfaces must be provided by the consuming application (same pattern as Pipeline/Workflow):
+Seven interfaces must be provided by the consuming application (same pattern as Pipeline/Workflow):
 
 | Interface | Role |
 |---|---|
 | `PipelineStatisticFactory` | Creates a fresh `PipelineStatistic` (all counters at 0) for a given pipeline |
 | `PipelineStatisticProvider` | `findByPipeline()` and `findAll()` |
 | `PipelineStatisticPersister` | `create()` (first save) and `save()` (update) |
+| `PipelineExecutionStatisticFactory` | Creates a `PipelineExecutionStatistic` from pipeline, status, startedAt, finishedAt |
+| `PipelineExecutionStatisticProvider` | `findByPipeline()` and `findByPipelineBetween()` |
+| `PipelineExecutionStatisticPersister` | `create()` (append-only) |
 | `PipelineHistoryProvider` | `findByPipeline()` and `findByPipelineBetween()` for raw history queries |
 
 `DataInterfaceAliasPass` registers their aliases automatically.
