@@ -10,7 +10,6 @@ use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExecutorStep;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
-use Symfony\Component\HttpKernel\KernelInterface;
 
 #[AsExecutableStep(
     code: 'etl.executor.console_command',
@@ -23,7 +22,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 final class ConsoleCommandExecutorStep extends AbstractExecutorStep
 {
     public function __construct(
-        private readonly KernelInterface $kernel,
+        private readonly Application $application,
     ) {
     }
 
@@ -43,11 +42,10 @@ final class ConsoleCommandExecutorStep extends AbstractExecutorStep
         ], $arguments));
         $output = new BufferedOutput();
 
-        $application = new Application($this->kernel);
-        $application->setAutoExit(false);
-        $application->setCatchExceptions((bool) $catchExceptions);
+        $this->application->setAutoExit(false);
+        $this->application->setCatchExceptions((bool) $catchExceptions);
 
-        $exitCode = $application->run($input, $output);
+        $exitCode = $this->application->run($input, $output);
 
         return [
             'exitCode' => $exitCode,
