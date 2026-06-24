@@ -18,5 +18,4 @@ return ECSConfig::configure()
         namespaces: true,
         spaces: true,
         controlStructures: true,
-        strict: true,
     );
