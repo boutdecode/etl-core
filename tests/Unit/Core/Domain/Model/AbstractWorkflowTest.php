@@ -132,6 +132,11 @@ class TestWorkflow extends AbstractWorkflow
         $this->updatedAt = null;
     }
 
+    public function getId(): string
+    {
+        return 'test-workflow-id';
+    }
+
     public function setName(string $name): void
     {
         $this->name = $name;

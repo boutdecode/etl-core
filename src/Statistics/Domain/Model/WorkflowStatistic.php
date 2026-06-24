@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\Statistics\Domain\Model;
 
-use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Workflow;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Enum\PipelineHistoryStatusEnum;
 
-interface PipelineStatistic
+interface WorkflowStatistic
 {
-    public function getPipeline(): Pipeline;
+    public function getWorkflow(): Workflow;
 
     public function getTotalCount(): int;
 
@@ -17,13 +17,13 @@ interface PipelineStatistic
 
     public function getFailureCount(): int;
 
-    public function getTotalDurationSeconds(): float;
+    public function getTotalDurationMs(): int;
 
-    public function getMinDurationSeconds(): ?float;
+    public function getMinDurationMs(): ?int;
 
-    public function getMaxDurationSeconds(): ?float;
+    public function getMaxDurationMs(): ?int;
 
-    public function getAverageDurationSeconds(): ?float;
+    public function getAverageDurationMs(): ?int;
 
     public function getSuccessRate(): float;
 
@@ -33,7 +33,7 @@ interface PipelineStatistic
 
     public function getUpdatedAt(): \DateTimeImmutable;
 
-    public function recordSuccess(float $durationSeconds): void;
+    public function recordSuccess(int $durationMs): void;
 
-    public function recordFailure(float $durationSeconds): void;
+    public function recordFailure(int $durationMs): void;
 }

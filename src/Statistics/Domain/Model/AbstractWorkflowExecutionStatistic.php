@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\Statistics\Domain\Model;
 
-use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Workflow;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Enum\PipelineHistoryStatusEnum;
 
-abstract class AbstractPipelineExecutionStatistic implements PipelineExecutionStatistic
+abstract class AbstractWorkflowExecutionStatistic implements WorkflowExecutionStatistic
 {
-    protected Pipeline $pipeline;
+    protected Workflow $workflow;
 
     protected PipelineHistoryStatusEnum $status;
 
@@ -17,9 +17,9 @@ abstract class AbstractPipelineExecutionStatistic implements PipelineExecutionSt
 
     protected \DateTimeImmutable $finishedAt;
 
-    public function getPipeline(): Pipeline
+    public function getWorkflow(): Workflow
     {
-        return $this->pipeline;
+        return $this->workflow;
     }
 
     public function getStatus(): PipelineHistoryStatusEnum
@@ -37,8 +37,10 @@ abstract class AbstractPipelineExecutionStatistic implements PipelineExecutionSt
         return $this->finishedAt;
     }
 
-    public function getDurationSeconds(): float
+    public function getDurationMs(): int
     {
-        return (float) ($this->finishedAt->getTimestamp() - $this->startedAt->getTimestamp());
+        return (int) round(
+            ((float) $this->finishedAt->format('U.u') - (float) $this->startedAt->format('U.u')) * 1000
+        );
     }
 }

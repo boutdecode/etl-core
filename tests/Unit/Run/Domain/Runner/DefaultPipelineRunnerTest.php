@@ -314,6 +314,11 @@ class TestPipeline implements Pipeline
         return null;
     }
 
+    public function getWorkflow(): \BoutDeCode\ETLCoreBundle\Core\Domain\Model\Workflow
+    {
+        throw new \LogicException('Not implemented in test stub.');
+    }
+
     public function setRunnableSteps(iterable $runnableSteps): void
     {
         $this->runnableSteps = $runnableSteps instanceof \Traversable

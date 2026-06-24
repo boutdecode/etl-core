@@ -6,10 +6,10 @@ namespace BoutDeCode\ETLCoreBundle\Statistics\Application\Operation\Query;
 
 use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Query\SyncQuery;
 
-final readonly class GetPipelineStatisticQuery implements SyncQuery
+final readonly class GetWorkflowStatisticQuery implements SyncQuery
 {
     public function __construct(
-        public string $pipelineId,
+        public string $workflowId,
     ) {
     }
 }

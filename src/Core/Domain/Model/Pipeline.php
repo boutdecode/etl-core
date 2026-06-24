@@ -39,6 +39,8 @@ interface Pipeline
 
     public function getStepFromRunnableStep(Step $runnableStep): ?Step;
 
+    public function getWorkflow(): Workflow;
+
     /**
      * @return array<string, mixed>
      */

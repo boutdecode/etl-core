@@ -317,6 +317,11 @@ class PipelineSchedulerTest extends TestCase
                 return null;
             }
 
+            public function getWorkflow(): \BoutDeCode\ETLCoreBundle\Core\Domain\Model\Workflow
+            {
+                throw new \LogicException('Not implemented in test stub.');
+            }
+
             public function schedule(): void
             {
             }

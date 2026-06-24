@@ -6,6 +6,8 @@ namespace BoutDeCode\ETLCoreBundle\Core\Domain\Model;
 
 interface Workflow
 {
+    public function getId(): string;
+
     public function getName(): string;
 
     public function getDescription(): ?string;

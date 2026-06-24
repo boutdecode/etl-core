@@ -19,12 +19,12 @@ use BoutDeCode\ETLCoreBundle\Run\Domain\Data\Provider\PipelineHistoryProvider;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Factory\PipelineHistoryFactory;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Factory\StepHistoryFactory;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Scheduler\ExpressionScheduler;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\PipelineExecutionStatisticPersister;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\PipelineStatisticPersister;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Provider\PipelineExecutionStatisticProvider;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Provider\PipelineStatisticProvider;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\PipelineExecutionStatisticFactory;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\PipelineStatisticFactory;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\WorkflowExecutionStatisticPersister;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\WorkflowStatisticPersister;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Provider\WorkflowExecutionStatisticProvider;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Provider\WorkflowStatisticProvider;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\WorkflowExecutionStatisticFactory;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\WorkflowStatisticFactory;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -50,12 +50,12 @@ final class DataInterfaceAliasPass implements CompilerPassInterface
         PipelineHistoryFactory::class,
         StepHistoryFactory::class,
         ExpressionScheduler::class,
-        PipelineStatisticProvider::class,
-        PipelineStatisticPersister::class,
-        PipelineStatisticFactory::class,
-        PipelineExecutionStatisticProvider::class,
-        PipelineExecutionStatisticPersister::class,
-        PipelineExecutionStatisticFactory::class,
+        WorkflowStatisticProvider::class,
+        WorkflowStatisticPersister::class,
+        WorkflowStatisticFactory::class,
+        WorkflowExecutionStatisticProvider::class,
+        WorkflowExecutionStatisticPersister::class,
+        WorkflowExecutionStatisticFactory::class,
     ];
 
     public function process(ContainerBuilder $container): void

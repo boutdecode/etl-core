@@ -6,13 +6,14 @@ namespace BoutDeCode\ETLCoreBundle\Tests\Unit\Statistics\Infrastructure\Middlewa
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\PipelineExecutionStatisticPersister;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\PipelineStatisticPersister;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Provider\PipelineStatisticProvider;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\PipelineExecutionStatisticFactory;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\PipelineStatisticFactory;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\PipelineExecutionStatistic;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\PipelineStatistic;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Workflow;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\WorkflowExecutionStatisticPersister;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\WorkflowStatisticPersister;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Provider\WorkflowStatisticProvider;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\WorkflowExecutionStatisticFactory;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\WorkflowStatisticFactory;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\WorkflowExecutionStatistic;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\WorkflowStatistic;
 use BoutDeCode\ETLCoreBundle\Statistics\Infrastructure\Middleware\PipelineStatisticMiddleware;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\Test;
@@ -20,27 +21,27 @@ use PHPUnit\Framework\TestCase;
 
 class PipelineStatisticMiddlewareTest extends TestCase
 {
-    private PipelineStatisticProvider $provider;
+    private WorkflowStatisticProvider $provider;
 
-    private PipelineStatisticFactory $factory;
+    private WorkflowStatisticFactory $factory;
 
-    private PipelineStatisticPersister $persister;
+    private WorkflowStatisticPersister $persister;
 
-    private PipelineExecutionStatisticFactory $executionFactory;
+    private WorkflowExecutionStatisticFactory $executionFactory;
 
-    private PipelineExecutionStatisticPersister $executionPersister;
+    private WorkflowExecutionStatisticPersister $executionPersister;
 
     private PipelineStatisticMiddleware $middleware;
 
     protected function setUp(): void
     {
-        $this->provider = $this->createMock(PipelineStatisticProvider::class);
-        $this->factory = $this->createMock(PipelineStatisticFactory::class);
-        $this->persister = $this->createMock(PipelineStatisticPersister::class);
-        $this->executionFactory = $this->createMock(PipelineExecutionStatisticFactory::class);
-        $this->executionPersister = $this->createMock(PipelineExecutionStatisticPersister::class);
+        $this->provider = $this->createMock(WorkflowStatisticProvider::class);
+        $this->factory = $this->createMock(WorkflowStatisticFactory::class);
+        $this->persister = $this->createMock(WorkflowStatisticPersister::class);
+        $this->executionFactory = $this->createMock(WorkflowExecutionStatisticFactory::class);
+        $this->executionPersister = $this->createMock(WorkflowExecutionStatisticPersister::class);
 
-        $executionStatistic = $this->createMock(PipelineExecutionStatistic::class);
+        $executionStatistic = $this->createMock(WorkflowExecutionStatistic::class);
         $this->executionFactory->method('create')->willReturn($executionStatistic);
         $this->executionPersister->method('create')->willReturnArgument(0);
 
@@ -74,22 +75,18 @@ class PipelineStatisticMiddlewareTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function processShouldCreateStatisticWhenNoneExists(): void
     {
-        $pipeline = $this->createMock(Pipeline::class);
-        $pipeline->method('getStartedAt')->willReturn(new \DateTimeImmutable('-5 seconds'));
-
-        $statistic = $this->createMock(PipelineStatistic::class);
+        $pipeline = $this->createPipelineMock(new \DateTimeImmutable('-5 seconds'));
+        $statistic = $this->createMock(WorkflowStatistic::class);
 
         $context = new Context('input');
         $context->setPipeline($pipeline);
 
         $this->provider->expects($this->once())
-            ->method('findByPipeline')
-            ->with($pipeline)
+            ->method('findByWorkflow')
             ->willReturn(null);
 
         $this->factory->expects($this->once())
             ->method('create')
-            ->with($pipeline)
             ->willReturn($statistic);
 
         $statistic->expects($this->once())->method('recordSuccess');
@@ -106,17 +103,14 @@ class PipelineStatisticMiddlewareTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function processShouldUpdateExistingStatistic(): void
     {
-        $pipeline = $this->createMock(Pipeline::class);
-        $pipeline->method('getStartedAt')->willReturn(new \DateTimeImmutable('-3 seconds'));
-
-        $statistic = $this->createMock(PipelineStatistic::class);
+        $pipeline = $this->createPipelineMock(new \DateTimeImmutable('-3 seconds'));
+        $statistic = $this->createMock(WorkflowStatistic::class);
 
         $context = new Context('input');
         $context->setPipeline($pipeline);
 
         $this->provider->expects($this->once())
-            ->method('findByPipeline')
-            ->with($pipeline)
+            ->method('findByWorkflow')
             ->willReturn($statistic);
 
         $this->factory->expects($this->never())->method('create');
@@ -135,10 +129,8 @@ class PipelineStatisticMiddlewareTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function processShouldRecordFailureWhenContextHasErrors(): void
     {
-        $pipeline = $this->createMock(Pipeline::class);
-        $pipeline->method('getStartedAt')->willReturn(new \DateTimeImmutable('-2 seconds'));
-
-        $statistic = $this->createMock(PipelineStatistic::class);
+        $pipeline = $this->createPipelineMock(new \DateTimeImmutable('-2 seconds'));
+        $statistic = $this->createMock(WorkflowStatistic::class);
 
         $context = new Context('input');
         $context->setPipeline($pipeline);
@@ -146,7 +138,7 @@ class PipelineStatisticMiddlewareTest extends TestCase
             'error' => 'Something went wrong',
         ]);
 
-        $this->provider->method('findByPipeline')->willReturn($statistic);
+        $this->provider->method('findByWorkflow')->willReturn($statistic);
 
         $statistic->expects($this->once())->method('recordFailure');
         $statistic->expects($this->never())->method('recordSuccess');
@@ -160,16 +152,14 @@ class PipelineStatisticMiddlewareTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function processShouldHandleNullStartedAt(): void
     {
-        $pipeline = $this->createMock(Pipeline::class);
-        $pipeline->method('getStartedAt')->willReturn(null);
-
-        $statistic = $this->createMock(PipelineStatistic::class);
+        $pipeline = $this->createPipelineMock(null);
+        $statistic = $this->createMock(WorkflowStatistic::class);
 
         $context = new Context('input');
         $context->setPipeline($pipeline);
 
-        $this->provider->method('findByPipeline')->willReturn($statistic);
-        $statistic->expects($this->once())->method('recordSuccess')->with(0.0);
+        $this->provider->method('findByWorkflow')->willReturn($statistic);
+        $statistic->expects($this->once())->method('recordSuccess')->with(0);
         $this->persister->method('save')->willReturn($statistic);
 
         $this->middleware->process($context, fn ($ctx) => $ctx);
@@ -179,15 +169,13 @@ class PipelineStatisticMiddlewareTest extends TestCase
     #[AllowMockObjectsWithoutExpectations]
     public function processShouldCallNextAndReturnResult(): void
     {
-        $pipeline = $this->createMock(Pipeline::class);
-        $pipeline->method('getStartedAt')->willReturn(new \DateTimeImmutable());
-
-        $statistic = $this->createMock(PipelineStatistic::class);
+        $pipeline = $this->createPipelineMock(new \DateTimeImmutable());
+        $statistic = $this->createMock(WorkflowStatistic::class);
 
         $context = new Context('input');
         $context->setPipeline($pipeline);
 
-        $this->provider->method('findByPipeline')->willReturn($statistic);
+        $this->provider->method('findByWorkflow')->willReturn($statistic);
         $statistic->method('recordSuccess');
         $this->persister->method('save')->willReturn($statistic);
 
@@ -200,5 +188,15 @@ class PipelineStatisticMiddlewareTest extends TestCase
 
         $this->assertTrue($nextCalled);
         $this->assertSame('done', $result->getResult());
+    }
+
+    private function createPipelineMock(?\DateTimeImmutable $startedAt = null): Pipeline
+    {
+        $workflow = $this->createMock(Workflow::class);
+        $pipeline = $this->createMock(Pipeline::class);
+        $pipeline->method('getWorkflow')->willReturn($workflow);
+        $pipeline->method('getStartedAt')->willReturn($startedAt);
+
+        return $pipeline;
     }
 }

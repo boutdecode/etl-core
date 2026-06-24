@@ -130,8 +130,8 @@ The bundle provides abstract base classes to extend and interfaces to implement:
 | `Pipeline` entity | `AbstractPipeline` | — |
 | `StepHistory` entity | `AbstractStepHistory` | — |
 | `PipelineHistory` entity | `AbstractPipelineHistory` | — |
-| `PipelineStatistic` entity | `AbstractPipelineStatistic` | — |
-| `PipelineExecutionStatistic` entity | `AbstractPipelineExecutionStatistic` | — |
+| `WorkflowStatistic` entity | `AbstractWorkflowStatistic` | — |
+| `WorkflowExecutionStatistic` entity | `AbstractWorkflowExecutionStatistic` | — |
 
 Each abstract class holds all the typed properties and method implementations. The only thing left to add in the concrete entity is:
 - A Doctrine `#[ORM\Entity]` / `#[ORM\Table]` mapping.
@@ -393,24 +393,24 @@ class PipelineHistory extends AbstractPipelineHistory
 ```
 
 ```php
-// src/Entity/PipelineStatistic.php
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\AbstractPipelineStatistic;
+// src/Entity/WorkflowStatistic.php
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\AbstractWorkflowStatistic;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Enum\PipelineHistoryStatusEnum;
-use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline as PipelineInterface;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Workflow as WorkflowInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'pipeline_statistic')]
-class PipelineStatistic extends AbstractPipelineStatistic
+#[ORM\Table(name: 'workflow_statistic')]
+class WorkflowStatistic extends AbstractWorkflowStatistic
 {
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
     private string $id;
 
-    #[ORM\ManyToOne(targetEntity: Pipeline::class)]
+    #[ORM\ManyToOne(targetEntity: Workflow::class)]
     #[ORM\JoinColumn(nullable: false)]
-    protected PipelineInterface $pipeline;
+    protected WorkflowInterface $workflow;
 
     #[ORM\Column]
     protected int $totalCount = 0;
@@ -421,14 +421,14 @@ class PipelineStatistic extends AbstractPipelineStatistic
     #[ORM\Column]
     protected int $failureCount = 0;
 
-    #[ORM\Column(type: 'float')]
-    protected float $totalDurationSeconds = 0.0;
+    #[ORM\Column]
+    protected int $totalDurationMs = 0;
 
-    #[ORM\Column(type: 'float', nullable: true)]
-    protected ?float $minDurationSeconds = null;
+    #[ORM\Column(nullable: true)]
+    protected ?int $minDurationMs = null;
 
-    #[ORM\Column(type: 'float', nullable: true)]
-    protected ?float $maxDurationSeconds = null;
+    #[ORM\Column(nullable: true)]
+    protected ?int $maxDurationMs = null;
 
     #[ORM\Column(nullable: true)]
     protected ?\DateTimeImmutable $lastRunAt = null;
@@ -439,10 +439,10 @@ class PipelineStatistic extends AbstractPipelineStatistic
     #[ORM\Column]
     protected \DateTimeImmutable $updatedAt;
 
-    public function __construct(PipelineInterface $pipeline)
+    public function __construct(WorkflowInterface $workflow)
     {
         $this->id = (string) Uuid::v7();
-        $this->pipeline = $pipeline;
+        $this->workflow = $workflow;
         $this->updatedAt = new \DateTimeImmutable();
     }
 
@@ -454,24 +454,24 @@ class PipelineStatistic extends AbstractPipelineStatistic
 ```
 
 ```php
-// src/Entity/PipelineExecutionStatistic.php
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\AbstractPipelineExecutionStatistic;
+// src/Entity/WorkflowExecutionStatistic.php
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\AbstractWorkflowExecutionStatistic;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Enum\PipelineHistoryStatusEnum;
-use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline as PipelineInterface;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Workflow as WorkflowInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'pipeline_execution_statistic')]
-class PipelineExecutionStatistic extends AbstractPipelineExecutionStatistic
+#[ORM\Table(name: 'workflow_execution_statistic')]
+class WorkflowExecutionStatistic extends AbstractWorkflowExecutionStatistic
 {
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
     private string $id;
 
-    #[ORM\ManyToOne(targetEntity: Pipeline::class)]
+    #[ORM\ManyToOne(targetEntity: Workflow::class)]
     #[ORM\JoinColumn(nullable: false)]
-    protected PipelineInterface $pipeline;
+    protected WorkflowInterface $workflow;
 
     #[ORM\Column(enumType: PipelineHistoryStatusEnum::class)]
     protected PipelineHistoryStatusEnum $status;
@@ -483,13 +483,13 @@ class PipelineExecutionStatistic extends AbstractPipelineExecutionStatistic
     protected \DateTimeImmutable $finishedAt;
 
     public function __construct(
-        PipelineInterface $pipeline,
+        WorkflowInterface $workflow,
         PipelineHistoryStatusEnum $status,
         \DateTimeImmutable $startedAt,
         \DateTimeImmutable $finishedAt,
     ) {
         $this->id = (string) Uuid::v7();
-        $this->pipeline = $pipeline;
+        $this->workflow = $workflow;
         $this->status = $status;
         $this->startedAt = $startedAt;
         $this->finishedAt = $finishedAt;
@@ -942,32 +942,32 @@ Built-in middleware priority reference:
 
 The bundle tracks two complementary views of pipeline execution. After each run, `PipelineStatisticMiddleware` (priority -60) automatically updates both records.
 
-### `PipelineStatistic` — pre-aggregated counters
+### `WorkflowStatistic` — pre-aggregated counters
 
-One record per pipeline, updated in-place after every run.
+One record per workflow, updated in-place after every run.
 
 | Field | Description |
 |---|---|
 | `totalCount` | Total number of executions |
 | `successCount` / `failureCount` | Executions by outcome |
-| `totalDurationSeconds` | Cumulative execution time (seconds) |
-| `minDurationSeconds` / `maxDurationSeconds` | Fastest / slowest run |
-| `getAverageDurationSeconds()` | Computed: total / count |
+| `totalDurationMs` | Cumulative execution time (milliseconds) |
+| `minDurationMs` / `maxDurationMs` | Fastest / slowest run |
+| `getAverageDurationMs()` | Computed: total / count (rounded to ms) |
 | `getSuccessRate()` | Computed: success / total (0.0–1.0) |
 | `lastRunAt` | Timestamp of the most recent run |
 | `lastRunStatus` | Outcome of the most recent run |
 
-### `PipelineExecutionStatistic` — individual execution log
+### `WorkflowExecutionStatistic` — individual execution log
 
 One record per run, append-only. Stores the raw event for temporal queries.
 
 | Field | Description |
 |---|---|
-| `pipeline` | Reference to the pipeline |
+| `workflow` | Reference to the workflow |
 | `status` | `COMPLETED` or `FAILED` |
 | `startedAt` | Execution start timestamp |
 | `finishedAt` | Execution end timestamp |
-| `getDurationSeconds()` | Computed: `finishedAt - startedAt` |
+| `getDurationMs()` | Computed: `finishedAt - startedAt` in milliseconds |
 
 ### Interfaces to implement
 
@@ -975,12 +975,12 @@ Seven interfaces must be provided by the consuming application (same pattern as 
 
 | Interface | Role |
 |---|---|
-| `PipelineStatisticFactory` | Creates a fresh `PipelineStatistic` (all counters at 0) for a given pipeline |
-| `PipelineStatisticProvider` | `findByPipeline()` and `findAll()` |
-| `PipelineStatisticPersister` | `create()` (first save) and `save()` (update) |
-| `PipelineExecutionStatisticFactory` | Creates a `PipelineExecutionStatistic` from pipeline, status, startedAt, finishedAt |
-| `PipelineExecutionStatisticProvider` | `findByPipeline()` and `findByPipelineBetween()` |
-| `PipelineExecutionStatisticPersister` | `create()` (append-only) |
+| `WorkflowStatisticFactory` | Creates a fresh `WorkflowStatistic` (all counters at 0) for a given workflow |
+| `WorkflowStatisticProvider` | `findByWorkflow()` and `findAll()` |
+| `WorkflowStatisticPersister` | `create()` (first save) and `save()` (update) |
+| `WorkflowExecutionStatisticFactory` | Creates a `WorkflowExecutionStatistic` from workflow, status, startedAt, finishedAt |
+| `WorkflowExecutionStatisticProvider` | `findByWorkflow()` and `findByWorkflowBetween()` |
+| `WorkflowExecutionStatisticPersister` | `create()` (append-only) |
 | `PipelineHistoryProvider` | `findByPipeline()` and `findByPipelineBetween()` for raw history queries |
 
 `DataInterfaceAliasPass` registers their aliases automatically.
@@ -991,19 +991,19 @@ Two built-in query handlers are available via the `QueryBus`:
 
 ```php
 use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Query\QueryBus;
-use BoutDeCode\ETLCoreBundle\Statistics\Application\Operation\Query\GetPipelineStatisticQuery;
+use BoutDeCode\ETLCoreBundle\Statistics\Application\Operation\Query\GetWorkflowStatisticQuery;
 use BoutDeCode\ETLCoreBundle\Statistics\Application\Operation\Query\GetPipelineHistoriesQuery;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\PipelineStatistic;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Model\WorkflowStatistic;
 
-// Aggregated stats for one pipeline
-/** @var PipelineStatistic|null $stat */
-$stat = $this->queryBus->dispatch(new GetPipelineStatisticQuery($pipelineId));
+// Aggregated stats for one workflow
+/** @var WorkflowStatistic|null $stat */
+$stat = $this->queryBus->dispatch(new GetWorkflowStatisticQuery($workflowId));
 
 if ($stat !== null) {
-    echo $stat->getTotalCount();               // total runs
-    echo $stat->getSuccessRate() * 100 . '%';  // e.g. "87.5%"
-    echo $stat->getAverageDurationSeconds();   // avg seconds
-    echo $stat->getLastRunAt()->format('c');   // ISO 8601
+    echo $stat->getTotalCount();              // total runs
+    echo $stat->getSuccessRate() * 100 . '%'; // e.g. "87.5%"
+    echo $stat->getAverageDurationMs();       // avg milliseconds
+    echo $stat->getLastRunAt()->format('c');  // ISO 8601
 }
 
 // Raw history over a period (for temporal trend)

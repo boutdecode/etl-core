@@ -7,20 +7,20 @@ namespace BoutDeCode\ETLCoreBundle\Statistics\Infrastructure\Middleware;
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Enum\PipelineHistoryStatusEnum;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\Middleware;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\PipelineExecutionStatisticPersister;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\PipelineStatisticPersister;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Provider\PipelineStatisticProvider;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\PipelineExecutionStatisticFactory;
-use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\PipelineStatisticFactory;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\WorkflowExecutionStatisticPersister;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\WorkflowStatisticPersister;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Provider\WorkflowStatisticProvider;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\WorkflowExecutionStatisticFactory;
+use BoutDeCode\ETLCoreBundle\Statistics\Domain\Factory\WorkflowStatisticFactory;
 
 final readonly class PipelineStatisticMiddleware implements Middleware
 {
     public function __construct(
-        private PipelineStatisticProvider $pipelineStatisticProvider,
-        private PipelineStatisticFactory $pipelineStatisticFactory,
-        private PipelineStatisticPersister $pipelineStatisticPersister,
-        private PipelineExecutionStatisticFactory $pipelineExecutionStatisticFactory,
-        private PipelineExecutionStatisticPersister $pipelineExecutionStatisticPersister,
+        private WorkflowStatisticProvider $workflowStatisticProvider,
+        private WorkflowStatisticFactory $workflowStatisticFactory,
+        private WorkflowStatisticPersister $workflowStatisticPersister,
+        private WorkflowExecutionStatisticFactory $workflowExecutionStatisticFactory,
+        private WorkflowExecutionStatisticPersister $workflowExecutionStatisticPersister,
     ) {
     }
 
@@ -35,40 +35,41 @@ final readonly class PipelineStatisticMiddleware implements Middleware
             return $result;
         }
 
+        $workflow = $pipeline->getWorkflow();
         $startedAt = $pipeline->getStartedAt();
         $finishedAt = new \DateTimeImmutable();
-        $durationSeconds = $startedAt !== null
-            ? (float) ($finishedAt->getTimestamp() - $startedAt->getTimestamp())
-            : 0.0;
+        $durationMs = $startedAt !== null
+            ? (int) round(((float) $finishedAt->format('U.u') - (float) $startedAt->format('U.u')) * 1000)
+            : 0;
 
         $hasErrors = (bool) $context->getErrors();
 
-        $statistic = $this->pipelineStatisticProvider->findByPipeline($pipeline);
+        $statistic = $this->workflowStatisticProvider->findByWorkflow($workflow);
         $isNew = $statistic === null;
 
         if ($isNew) {
-            $statistic = $this->pipelineStatisticFactory->create($pipeline);
+            $statistic = $this->workflowStatisticFactory->create($workflow);
         }
 
         if ($hasErrors) {
-            $statistic->recordFailure($durationSeconds);
+            $statistic->recordFailure($durationMs);
         } else {
-            $statistic->recordSuccess($durationSeconds);
+            $statistic->recordSuccess($durationMs);
         }
 
         if ($isNew) {
-            $this->pipelineStatisticPersister->create($statistic);
+            $this->workflowStatisticPersister->create($statistic);
         } else {
-            $this->pipelineStatisticPersister->save($statistic);
+            $this->workflowStatisticPersister->save($statistic);
         }
 
-        $execution = $this->pipelineExecutionStatisticFactory->create(
-            $pipeline,
+        $execution = $this->workflowExecutionStatisticFactory->create(
+            $workflow,
             $hasErrors ? PipelineHistoryStatusEnum::FAILED : PipelineHistoryStatusEnum::COMPLETED,
             $startedAt ?? new \DateTimeImmutable(),
             $finishedAt,
         );
-        $this->pipelineExecutionStatisticPersister->create($execution);
+        $this->workflowExecutionStatisticPersister->create($execution);
 
         /** @var Context $result */
         $result = $next($context);

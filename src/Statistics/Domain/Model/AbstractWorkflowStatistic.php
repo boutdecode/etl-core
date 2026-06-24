@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\Statistics\Domain\Model;
 
-use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Workflow;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Enum\PipelineHistoryStatusEnum;
 
-abstract class AbstractPipelineStatistic implements PipelineStatistic
+abstract class AbstractWorkflowStatistic implements WorkflowStatistic
 {
-    protected Pipeline $pipeline;
+    protected Workflow $workflow;
 
     protected int $totalCount = 0;
 
@@ -17,11 +17,11 @@ abstract class AbstractPipelineStatistic implements PipelineStatistic
 
     protected int $failureCount = 0;
 
-    protected float $totalDurationSeconds = 0.0;
+    protected int $totalDurationMs = 0;
 
-    protected ?float $minDurationSeconds = null;
+    protected ?int $minDurationMs = null;
 
-    protected ?float $maxDurationSeconds = null;
+    protected ?int $maxDurationMs = null;
 
     protected ?\DateTimeImmutable $lastRunAt = null;
 
@@ -29,9 +29,9 @@ abstract class AbstractPipelineStatistic implements PipelineStatistic
 
     protected \DateTimeImmutable $updatedAt;
 
-    public function getPipeline(): Pipeline
+    public function getWorkflow(): Workflow
     {
-        return $this->pipeline;
+        return $this->workflow;
     }
 
     public function getTotalCount(): int
@@ -49,28 +49,28 @@ abstract class AbstractPipelineStatistic implements PipelineStatistic
         return $this->failureCount;
     }
 
-    public function getTotalDurationSeconds(): float
+    public function getTotalDurationMs(): int
     {
-        return $this->totalDurationSeconds;
+        return $this->totalDurationMs;
     }
 
-    public function getMinDurationSeconds(): ?float
+    public function getMinDurationMs(): ?int
     {
-        return $this->minDurationSeconds;
+        return $this->minDurationMs;
     }
 
-    public function getMaxDurationSeconds(): ?float
+    public function getMaxDurationMs(): ?int
     {
-        return $this->maxDurationSeconds;
+        return $this->maxDurationMs;
     }
 
-    public function getAverageDurationSeconds(): ?float
+    public function getAverageDurationMs(): ?int
     {
         if ($this->totalCount === 0) {
             return null;
         }
 
-        return $this->totalDurationSeconds / $this->totalCount;
+        return (int) round($this->totalDurationMs / $this->totalCount);
     }
 
     public function getSuccessRate(): float
@@ -97,36 +97,36 @@ abstract class AbstractPipelineStatistic implements PipelineStatistic
         return $this->updatedAt;
     }
 
-    public function recordSuccess(float $durationSeconds): void
+    public function recordSuccess(int $durationMs): void
     {
         $this->totalCount++;
         $this->successCount++;
-        $this->updateDuration($durationSeconds);
+        $this->updateDuration($durationMs);
         $this->lastRunAt = new \DateTimeImmutable();
         $this->lastRunStatus = PipelineHistoryStatusEnum::COMPLETED;
         $this->updatedAt = new \DateTimeImmutable();
     }
 
-    public function recordFailure(float $durationSeconds): void
+    public function recordFailure(int $durationMs): void
     {
         $this->totalCount++;
         $this->failureCount++;
-        $this->updateDuration($durationSeconds);
+        $this->updateDuration($durationMs);
         $this->lastRunAt = new \DateTimeImmutable();
         $this->lastRunStatus = PipelineHistoryStatusEnum::FAILED;
         $this->updatedAt = new \DateTimeImmutable();
     }
 
-    private function updateDuration(float $durationSeconds): void
+    private function updateDuration(int $durationMs): void
     {
-        $this->totalDurationSeconds += $durationSeconds;
+        $this->totalDurationMs += $durationMs;
 
-        if ($this->minDurationSeconds === null || $durationSeconds < $this->minDurationSeconds) {
-            $this->minDurationSeconds = $durationSeconds;
+        if ($this->minDurationMs === null || $durationMs < $this->minDurationMs) {
+            $this->minDurationMs = $durationMs;
         }
 
-        if ($this->maxDurationSeconds === null || $durationSeconds > $this->maxDurationSeconds) {
-            $this->maxDurationSeconds = $durationSeconds;
+        if ($this->maxDurationMs === null || $durationMs > $this->maxDurationMs) {
+            $this->maxDurationMs = $durationMs;
         }
     }
 }
