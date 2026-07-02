@@ -11,6 +11,28 @@ class Configuration implements ConfigurationInterface
 {
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        return new TreeBuilder('boutdecode_etl_core');
+        $treeBuilder = new TreeBuilder('boutdecode_etl_core');
+
+        $treeBuilder->getRootNode()
+            ->children()
+            ->arrayNode('notifications')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->arrayNode('email')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->scalarNode('from')->defaultValue('noreply@example.com')->end()
+            ->arrayNode('to')
+            ->scalarPrototype()->end()
+            ->defaultValue([])
+            ->end()
+            ->scalarNode('subject_prefix')->defaultValue('[ETL]')->end()
+            ->end()
+            ->end()
+            ->end()
+            ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

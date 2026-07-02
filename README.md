@@ -101,15 +101,26 @@ imports:
 
 ## Configuration
 
-No configuration is required. The bundle works out of the box with sensible defaults.
+No configuration is required to get started — the bundle works out of the box with sensible defaults. The only configurable keys under `boutdecode_etl_core:` are the [Notifications](#notifications) email settings:
 
-The bundle exposes no configurable keys under `boutdecode_etl_core:` — all service IDs, tags, and bus names are fixed constants defined by the bundle itself:
+```yaml
+# config/packages/boutdecode_etl_core.yaml
+boutdecode_etl_core:
+    notifications:
+        email:
+            from: 'noreply@example.com'  # default: 'noreply@example.com'
+            to: []                       # default: [] (no email sent)
+            subject_prefix: '[ETL]'      # default: '[ETL]'
+```
+
+All other service IDs, tags, and bus names are fixed constants defined by the bundle itself:
 
 | Constant | Value |
 |---|---|
 | Command bus | `boutdecode_etl_core.command.bus` |
 | Query bus | `boutdecode_etl_core.query.bus` |
 | Executable step tag | `boutdecode_etl_core.executable_step` |
+| Notification provider tag | `boutdecode_etl_core.notification_provider` |
 | Step middleware tag | `boutdecode_etl_core.step_middleware` |
 | Pipeline middleware tag | `boutdecode_etl_core.pipeline_middleware` |
 
@@ -531,7 +542,8 @@ src/
 ├── ETL/                            # ETL logic (Extract, Transform, Load)
 ├── Run/                            # Execution engine & middleware
 ├── CQS/                            # Command / Query Separation
-└── Statistics/                     # Pre-aggregated pipeline execution statistics
+├── Statistics/                     # Pre-aggregated pipeline execution statistics
+└── Notifications/                  # Success/failure notifications (Email, …)
 ```
 
 ### Key patterns
@@ -542,6 +554,7 @@ src/
 | CQS (Command / Query Separation) | `src/CQS/` |
 | Middleware chain | `Run/Domain/Middleware/` |
 | Strategy (pluggable steps) | `ETL/Domain/Model/` + `ExecutableStep` tag |
+| Strategy (pluggable notification providers) | `Notifications/Domain/Model/` + `NotificationProvider` tag |
 | State machine | `pipeline_lifecycle` Symfony Workflow |
 
 ---
@@ -929,6 +942,7 @@ Built-in middleware priority reference:
 | `PipelineProcessMiddleware` | pipeline | 0 |
 | `PipelineHistoryMiddleware` | pipeline | -50 |
 | `PipelineStatisticMiddleware` | pipeline | -60 |
+| `NotificationMiddleware` | pipeline | -70 |
 | `PipelineSuccessMiddleware` | pipeline | -100 |
 | `StepStartMiddleware` | step | 100 |
 | `StepFailureMiddleware` | step | 1 |
@@ -1013,6 +1027,80 @@ $histories = $this->queryBus->dispatch(new GetPipelineHistoriesQuery(
     to:   new \DateTimeImmutable('2026-01-31'),
 ));
 ```
+
+---
+
+## Notifications
+
+The bundle can notify external channels when a `Pipeline` run completes. After each run, `NotificationMiddleware` (priority `-70`, right after `PipelineStatisticMiddleware`) inspects the outcome and, if the `Workflow` opted in, dispatches a `NotificationMessage` to one or more `NotificationProvider` implementations. Only `EmailNotificationProvider` ships with the bundle today, but the provider registry supports any number of implementations (Slack, SMS, …).
+
+Sending a notification never fails the pipeline: if a provider throws, the error is logged via the `Logger` port and the other providers still run.
+
+### Opting in from a `Workflow`
+
+Notification preferences are read from the `Workflow`'s own `getConfiguration()` array, under a `notifications` key — no interface change is required:
+
+```php
+$workflow = $workflowFactory->create(
+    name: 'daily-import',
+    configuration: [
+        'notifications' => [
+            'on_success' => false,
+            'on_failure' => true,
+            'providers'  => ['email'], // optional — defaults to every registered provider
+        ],
+    ],
+);
+```
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `on_success` | `bool` | `false` | Notify when the pipeline completes without errors |
+| `on_failure` | `bool` | `false` | Notify when the pipeline completes with errors |
+| `providers` | `string[]` | all registered providers | Codes of the `NotificationProvider` services to use for this workflow |
+
+### Configuring the Email provider
+
+Recipients and sender are configured **globally**, at the bundle level (not per `Workflow`):
+
+```yaml
+# config/packages/boutdecode_etl_core.yaml
+boutdecode_etl_core:
+    notifications:
+        email:
+            from: 'noreply@example.com'
+            to: ['ops@example.com', 'alerts@example.com']
+            subject_prefix: '[ETL]'
+```
+
+If `to` is left empty, `EmailNotificationProvider` silently skips sending.
+
+### Implementing a custom notification provider
+
+1. Implement `NotificationProvider` and tag the class with `#[AsNotificationProvider(code: '...')]`:
+
+```php
+use BoutDeCode\ETLCoreBundle\Notifications\Domain\Attribute\AsNotificationProvider;
+use BoutDeCode\ETLCoreBundle\Notifications\Domain\Model\NotificationMessage;
+use BoutDeCode\ETLCoreBundle\Notifications\Domain\Model\NotificationProvider;
+
+#[AsNotificationProvider(code: 'slack')]
+final class SlackNotificationProvider implements NotificationProvider
+{
+    public function getCode(): string
+    {
+        return 'slack';
+    }
+
+    public function notify(NotificationMessage $message): void
+    {
+        // … post $message->workflow, $message->status, $message->errors to Slack …
+    }
+}
+```
+
+2. The class is **automatically tagged** `boutdecode_etl_core.notification_provider` by `NotificationProviderTagPass` — no manual service configuration is required.
+3. Reference its `code` from a `Workflow`'s `notifications.providers` configuration (or omit `providers` to notify through every registered provider).
 
 ---
 

@@ -8,6 +8,7 @@ use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Command\CommandHandler;
 use BoutDeCode\ETLCoreBundle\CQS\Application\Operation\Query\QueryHandler;
 use BoutDeCode\ETLCoreBundle\DependencyInjection\Compiler\DataInterfaceAliasPass;
 use BoutDeCode\ETLCoreBundle\DependencyInjection\Compiler\ExecutableStepTagPass;
+use BoutDeCode\ETLCoreBundle\DependencyInjection\Compiler\NotificationProviderTagPass;
 use BoutDeCode\ETLCoreBundle\DependencyInjection\ETLCoreExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
@@ -36,5 +37,6 @@ class BoutDeCodeETLCoreBundle extends Bundle
 
         $container->addCompilerPass(new DataInterfaceAliasPass());
         $container->addCompilerPass(new ExecutableStepTagPass());
+        $container->addCompilerPass(new NotificationProviderTagPass());
     }
 }

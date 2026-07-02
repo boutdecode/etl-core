@@ -60,6 +60,10 @@ services:
         tags:
             - { name: 'boutdecode_etl_core.pipeline_middleware', priority: -60 }
 
+    BoutDeCode\ETLCoreBundle\Notifications\Infrastructure\Middleware\NotificationMiddleware:
+        tags:
+            - { name: 'boutdecode_etl_core.pipeline_middleware', priority: -70 }
+
     BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\CycleLife\Pipeline\PipelineSuccessMiddleware:
         tags:
             - { name: 'boutdecode_etl_core.pipeline_middleware', priority: -100 }
@@ -81,6 +85,19 @@ services:
     BoutDeCode\ETLCoreBundle\ETL\Domain\Resolver\DefaultStepResolver:
         arguments:
             $steps: !tagged_iterator 'boutdecode_etl_core.executable_step'
+
+    # -------------------------------------------------------------------------
+    # Notification providers
+    # -------------------------------------------------------------------------
+    BoutDeCode\ETLCoreBundle\Notifications\Domain\Resolver\DefaultNotificationProviderResolver:
+        arguments:
+            $providers: !tagged_iterator 'boutdecode_etl_core.notification_provider'
+
+    BoutDeCode\ETLCoreBundle\Notifications\Infrastructure\Provider\EmailNotificationProvider:
+        arguments:
+            $from: '%boutdecode_etl_core.notifications.email.from%'
+            $to: '%boutdecode_etl_core.notifications.email.to%'
+            $subjectPrefix: '%boutdecode_etl_core.notifications.email.subject_prefix%'
 
     # -------------------------------------------------------------------------
     # Messenger buses — injected by named autowiring
@@ -106,6 +123,9 @@ services:
 
     BoutDeCode\ETLCoreBundle\ETL\Domain\Resolver\StepResolver:
         alias: BoutDeCode\ETLCoreBundle\ETL\Domain\Resolver\DefaultStepResolver
+
+    BoutDeCode\ETLCoreBundle\Notifications\Domain\Resolver\NotificationProviderResolver:
+        alias: BoutDeCode\ETLCoreBundle\Notifications\Domain\Resolver\DefaultNotificationProviderResolver
 
     BoutDeCode\ETLCoreBundle\Run\Domain\Runner\PipelineRunner:
         alias: BoutDeCode\ETLCoreBundle\Run\Domain\Runner\DefaultPipelineRunner

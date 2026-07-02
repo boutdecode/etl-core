@@ -13,7 +13,12 @@ class ETLCoreExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container): void
     {
-        $this->processConfiguration(new Configuration(), $configs);
+        $config = $this->processConfiguration(new Configuration(), $configs);
+        $email = $this->extractEmailConfig($config);
+
+        $container->setParameter('boutdecode_etl_core.notifications.email.from', $email['from']);
+        $container->setParameter('boutdecode_etl_core.notifications.email.to', $email['to']);
+        $container->setParameter('boutdecode_etl_core.notifications.email.subject_prefix', $email['subject_prefix']);
 
         $loader = new YamlFileLoader(
             $container,
@@ -26,5 +31,29 @@ class ETLCoreExtension extends Extension
     public function getAlias(): string
     {
         return 'boutdecode_etl_core';
+    }
+
+    /**
+     * @param array<array-key, mixed> $config
+     *
+     * @return array{from: string, to: string[], subject_prefix: string}
+     */
+    private function extractEmailConfig(array $config): array
+    {
+        $notifications = $config['notifications'] ?? [];
+        $notifications = is_array($notifications) ? $notifications : [];
+
+        $email = $notifications['email'] ?? [];
+        $email = is_array($email) ? $email : [];
+
+        $from = $email['from'] ?? null;
+        $to = $email['to'] ?? null;
+        $subjectPrefix = $email['subject_prefix'] ?? null;
+
+        return [
+            'from' => is_string($from) ? $from : 'noreply@example.com',
+            'to' => is_array($to) ? array_values(array_filter($to, 'is_string')) : [],
+            'subject_prefix' => is_string($subjectPrefix) ? $subjectPrefix : '[ETL]',
+        ];
     }
 }
