@@ -101,7 +101,7 @@ imports:
 
 ## Configuration
 
-No configuration is required to get started — the bundle works out of the box with sensible defaults. The only configurable keys under `boutdecode_etl_core:` are the [Notifications](#notifications) email settings:
+No configuration is required to get started — the bundle works out of the box with sensible defaults. The configurable keys under `boutdecode_etl_core:` are the [Notifications](#notifications) email settings and the [pipeline purge scheduler](#purging-old-pipelines):
 
 ```yaml
 # config/packages/boutdecode_etl_core.yaml
@@ -111,6 +111,10 @@ boutdecode_etl_core:
             from: 'noreply@example.com'  # default: 'noreply@example.com'
             to: []                       # default: [] (no email sent)
             subject_prefix: '[ETL]'      # default: '[ETL]'
+    purge:
+        enabled: false             # default: false — purge scheduler is opt-in
+        retention_days: 30         # default: 30 — pipelines older than N days get purged
+        cron_expression: '0 3 * * *'  # default: '0 3 * * *' — when the purge job runs
 ```
 
 All other service IDs, tags, and bus names are fixed constants defined by the bundle itself:
@@ -1035,6 +1039,66 @@ $histories = $this->queryBus->dispatch(new GetPipelineHistoriesQuery(
     from: new \DateTimeImmutable('2026-01-01'),
     to:   new \DateTimeImmutable('2026-01-31'),
 ));
+```
+
+---
+
+## Purging old Pipelines
+
+The bundle can automatically delete old `Pipeline` runs so that storage doesn't grow unbounded. This is handled by a scheduled job (`PurgeOldPipelines`, registered in `ETLScheduler`, daily at `0 3 * * *` by default) that is **disabled by default**.
+
+### What gets purged
+
+Pipelines in a terminal state (`COMPLETED` or `FAILED`) whose `finishedAt` is older than `retention_days`, together with their execution history: the matching `PipelineHistory` records and their `StepHistory` children.
+
+**Not purged:** `WorkflowStatistic` and `WorkflowExecutionStatistic` records ([Statistics](#statistics)) are intentionally left untouched, so aggregated/historical reporting survives pipeline purges.
+
+### Enabling the scheduler
+
+```yaml
+# config/packages/boutdecode_etl_core.yaml
+boutdecode_etl_core:
+    purge:
+        enabled: true                  # default: false
+        retention_days: 30             # default: 30 — minimum: 1
+        cron_expression: '0 3 * * *'   # default: '0 3 * * *' — any valid cron expression
+```
+
+`cron_expression` accepts any expression supported by `symfony/scheduler`'s `RecurringMessage::cron()` (standard 5-field cron syntax), and is validated at container-compile time.
+
+### Interfaces to implement
+
+Purging introduces the bundle's first delete capability. In addition to the existing Pipeline/PipelineHistory/StepHistory interfaces, the consuming application must implement:
+
+| Interface | New method | Role |
+|---|---|---|
+| `PipelineProvider` | `findPurgeablePipelines(\DateTimeImmutable $before): array` | Returns `COMPLETED`/`FAILED` pipelines with `finishedAt < $before` |
+| `PipelinePersister` | `delete(Pipeline $pipeline): void` | Deletes a pipeline record |
+| `PipelineHistoryPersister` | `delete(PipelineHistory $pipelineHistory): void` | Deletes a pipeline history record |
+| `StepHistoryPersister` | `delete(StepHistory $stepHistory): void` | Deletes a step history record |
+
+Example Doctrine implementation of the new provider method:
+
+```php
+final readonly class DoctrinePipelineProvider implements PipelineProvider
+{
+    public function __construct(private EntityManagerInterface $entityManager) {}
+
+    public function findPurgeablePipelines(\DateTimeImmutable $before): array
+    {
+        return $this->entityManager->createQueryBuilder()
+            ->select('p')
+            ->from(PipelineEntity::class, 'p')
+            ->where('p.status IN (:statuses)')
+            ->andWhere('p.finishedAt < :before')
+            ->setParameter('statuses', [PipelineStatus::COMPLETED, PipelineStatus::FAILED])
+            ->setParameter('before', $before)
+            ->getQuery()
+            ->getResult();
+    }
+
+    // ...
+}
 ```
 
 ---

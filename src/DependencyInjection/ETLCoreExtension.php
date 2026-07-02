@@ -15,10 +15,15 @@ class ETLCoreExtension extends Extension
     {
         $config = $this->processConfiguration(new Configuration(), $configs);
         $email = $this->extractEmailConfig($config);
+        $purge = $this->extractPurgeConfig($config);
 
         $container->setParameter('boutdecode_etl_core.notifications.email.from', $email['from']);
         $container->setParameter('boutdecode_etl_core.notifications.email.to', $email['to']);
         $container->setParameter('boutdecode_etl_core.notifications.email.subject_prefix', $email['subject_prefix']);
+
+        $container->setParameter('boutdecode_etl_core.purge.enabled', $purge['enabled']);
+        $container->setParameter('boutdecode_etl_core.purge.retention_days', $purge['retention_days']);
+        $container->setParameter('boutdecode_etl_core.purge.cron_expression', $purge['cron_expression']);
 
         $loader = new YamlFileLoader(
             $container,
@@ -54,6 +59,27 @@ class ETLCoreExtension extends Extension
             'from' => is_string($from) ? $from : 'noreply@example.com',
             'to' => is_array($to) ? array_values(array_filter($to, 'is_string')) : [],
             'subject_prefix' => is_string($subjectPrefix) ? $subjectPrefix : '[ETL]',
+        ];
+    }
+
+    /**
+     * @param array<array-key, mixed> $config
+     *
+     * @return array{enabled: bool, retention_days: int, cron_expression: string}
+     */
+    private function extractPurgeConfig(array $config): array
+    {
+        $purge = $config['purge'] ?? [];
+        $purge = is_array($purge) ? $purge : [];
+
+        $enabled = $purge['enabled'] ?? null;
+        $retentionDays = $purge['retention_days'] ?? null;
+        $cronExpression = $purge['cron_expression'] ?? null;
+
+        return [
+            'enabled' => is_bool($enabled) ? $enabled : false,
+            'retention_days' => is_int($retentionDays) ? $retentionDays : 30,
+            'cron_expression' => is_string($cronExpression) ? $cronExpression : '0 3 * * *',
         ];
     }
 }

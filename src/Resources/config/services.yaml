@@ -100,6 +100,18 @@ services:
             $subjectPrefix: '%boutdecode_etl_core.notifications.email.subject_prefix%'
 
     # -------------------------------------------------------------------------
+    # Purge scheduler
+    # -------------------------------------------------------------------------
+    BoutDeCode\ETLCoreBundle\Run\Infrastructure\Scheduler\Messenger\PurgeOldPipelinesHandler:
+        arguments:
+            $purgeEnabled: '%boutdecode_etl_core.purge.enabled%'
+            $purgeRetentionDays: '%boutdecode_etl_core.purge.retention_days%'
+
+    BoutDeCode\ETLCoreBundle\Run\Infrastructure\Scheduler\ETLScheduler:
+        arguments:
+            $purgeCronExpression: '%boutdecode_etl_core.purge.cron_expression%'
+
+    # -------------------------------------------------------------------------
     # Messenger buses — injected by named autowiring
     # -------------------------------------------------------------------------
     BoutDeCode\ETLCoreBundle\CQS\Infrastructure\Messenger\MessengerCommandBus:

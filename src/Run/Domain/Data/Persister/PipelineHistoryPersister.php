@@ -9,4 +9,6 @@ use BoutDeCode\ETLCoreBundle\Run\Domain\Model\PipelineHistory;
 interface PipelineHistoryPersister
 {
     public function create(PipelineHistory $pipelineHistory): PipelineHistory;
+
+    public function delete(PipelineHistory $pipelineHistory): void;
 }

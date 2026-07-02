@@ -9,4 +9,6 @@ use BoutDeCode\ETLCoreBundle\Run\Domain\Model\StepHistory;
 interface StepHistoryPersister
 {
     public function create(StepHistory $stepHistory): StepHistory;
+
+    public function delete(StepHistory $stepHistory): void;
 }

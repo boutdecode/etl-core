@@ -11,4 +11,6 @@ interface PipelinePersister
     public function create(Pipeline $pipeline): Pipeline;
 
     public function save(Pipeline $pipeline): Pipeline;
+
+    public function delete(Pipeline $pipeline): void;
 }

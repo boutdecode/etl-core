@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\DependencyInjection;
 
+use Cron\CronExpression;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -27,6 +28,21 @@ class Configuration implements ConfigurationInterface
             ->defaultValue([])
             ->end()
             ->scalarNode('subject_prefix')->defaultValue('[ETL]')->end()
+            ->end()
+            ->end()
+            ->end()
+            ->end()
+            ->arrayNode('purge')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->booleanNode('enabled')->defaultFalse()->end()
+            ->integerNode('retention_days')->defaultValue(30)->min(1)->end()
+            ->scalarNode('cron_expression')
+            ->defaultValue('0 3 * * *')
+            ->validate()
+            ->ifTrue(static fn (string $value): bool => ! CronExpression::isValidExpression($value))
+            ->thenInvalid('Invalid purge cron expression: %s')
+            ->end()
             ->end()
             ->end()
             ->end()

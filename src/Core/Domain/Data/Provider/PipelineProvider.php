@@ -14,4 +14,12 @@ interface PipelineProvider
      * @return Pipeline[]
      */
     public function findScheduledPipelines(): array;
+
+    /**
+     * Returns pipelines in a terminal state (COMPLETED or FAILED) whose
+     * finishedAt is strictly older than $before.
+     *
+     * @return Pipeline[]
+     */
+    public function findPurgeablePipelines(\DateTimeImmutable $before): array;
 }
