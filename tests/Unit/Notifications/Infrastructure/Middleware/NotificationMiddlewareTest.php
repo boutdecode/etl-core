@@ -52,9 +52,7 @@ class NotificationMiddlewareTest extends TestCase
     #[Test]
     public function processShouldNotNotifyWhenOnSuccessIsDisabled(): void
     {
-        $pipeline = $this->createPipelineMock([
-            'on_success' => false,
-        ]);
+        $pipeline = $this->createPipelineMock(notifyOnSuccess: false);
 
         $context = new Context('input');
         $context->setPipeline($pipeline);
@@ -68,9 +66,7 @@ class NotificationMiddlewareTest extends TestCase
     #[Test]
     public function processShouldNotifyAllProvidersOnSuccessWhenNoneSpecified(): void
     {
-        $pipeline = $this->createPipelineMock([
-            'on_success' => true,
-        ]);
+        $pipeline = $this->createPipelineMock(notifyOnSuccess: true);
 
         $context = new Context('input');
         $context->setPipeline($pipeline);
@@ -89,10 +85,7 @@ class NotificationMiddlewareTest extends TestCase
     #[Test]
     public function processShouldNotifyOnlyConfiguredProviders(): void
     {
-        $pipeline = $this->createPipelineMock([
-            'on_failure' => true,
-            'providers' => ['email'],
-        ]);
+        $pipeline = $this->createPipelineMock(notifyOnFailure: true, providers: ['email']);
 
         $context = new Context('input');
         $context->setPipeline($pipeline);
@@ -115,9 +108,7 @@ class NotificationMiddlewareTest extends TestCase
     #[Test]
     public function processShouldNotNotifyOnFailureWhenNotConfigured(): void
     {
-        $pipeline = $this->createPipelineMock([
-            'on_success' => true,
-        ]);
+        $pipeline = $this->createPipelineMock(notifyOnSuccess: true);
 
         $context = new Context('input');
         $context->setPipeline($pipeline);
@@ -134,9 +125,7 @@ class NotificationMiddlewareTest extends TestCase
     #[Test]
     public function processShouldLogAndContinueWhenProviderThrows(): void
     {
-        $pipeline = $this->createPipelineMock([
-            'on_success' => true,
-        ]);
+        $pipeline = $this->createPipelineMock(notifyOnSuccess: true);
 
         $context = new Context('input');
         $context->setPipeline($pipeline);
@@ -170,14 +159,17 @@ class NotificationMiddlewareTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $notificationConfiguration
+     * @param string[]|null $providers
      */
-    private function createPipelineMock(array $notificationConfiguration): Pipeline
-    {
+    private function createPipelineMock(
+        bool $notifyOnSuccess = false,
+        bool $notifyOnFailure = false,
+        ?array $providers = null,
+    ): Pipeline {
         $workflow = $this->createMock(Workflow::class);
-        $workflow->method('getConfiguration')->willReturn([
-            'notifications' => $notificationConfiguration,
-        ]);
+        $workflow->method('isNotifyOnSuccess')->willReturn($notifyOnSuccess);
+        $workflow->method('isNotifyOnFailure')->willReturn($notifyOnFailure);
+        $workflow->method('getNotificationProviders')->willReturn($providers);
 
         $pipeline = $this->createMock(Pipeline::class);
         $pipeline->method('getWorkflow')->willReturn($workflow);

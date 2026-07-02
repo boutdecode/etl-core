@@ -22,6 +22,15 @@ interface Workflow
      */
     public function getConfiguration(): array;
 
+    public function isNotifyOnSuccess(): bool;
+
+    public function isNotifyOnFailure(): bool;
+
+    /**
+     * @return string[]|null
+     */
+    public function getNotificationProviders(): ?array;
+
     public function getCreatedAt(): \DateTimeImmutable;
 
     public function getUpdatedAt(): ?\DateTimeImmutable;

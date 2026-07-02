@@ -178,6 +178,15 @@ class Workflow extends AbstractWorkflow
     protected array $configuration = [];
 
     #[ORM\Column]
+    protected bool $notifyOnSuccess = false;
+
+    #[ORM\Column]
+    protected bool $notifyOnFailure = false;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    protected ?array $notificationProviders = null;
+
+    #[ORM\Column]
     protected \DateTimeImmutable $createdAt;
 
     #[ORM\Column(nullable: true)]
@@ -1038,26 +1047,22 @@ Sending a notification never fails the pipeline: if a provider throws, the error
 
 ### Opting in from a `Workflow`
 
-Notification preferences are read from the `Workflow`'s own `getConfiguration()` array, under a `notifications` key — no interface change is required:
+Notification preferences are dedicated fields on `Workflow` (`isNotifyOnSuccess()`, `isNotifyOnFailure()`, `getNotificationProviders()`), set through `WorkflowFactory::create()`:
 
 ```php
 $workflow = $workflowFactory->create(
     name: 'daily-import',
-    configuration: [
-        'notifications' => [
-            'on_success' => false,
-            'on_failure' => true,
-            'providers'  => ['email'], // optional — defaults to every registered provider
-        ],
-    ],
+    notifyOnSuccess: false,
+    notifyOnFailure: true,
+    notificationProviders: ['email'], // optional — null defaults to every registered provider
 );
 ```
 
-| Key | Type | Default | Description |
+| `Workflow` method | Type | Default | Description |
 |---|---|---|---|
-| `on_success` | `bool` | `false` | Notify when the pipeline completes without errors |
-| `on_failure` | `bool` | `false` | Notify when the pipeline completes with errors |
-| `providers` | `string[]` | all registered providers | Codes of the `NotificationProvider` services to use for this workflow |
+| `isNotifyOnSuccess()` | `bool` | `false` | Notify when the pipeline completes without errors |
+| `isNotifyOnFailure()` | `bool` | `false` | Notify when the pipeline completes with errors |
+| `getNotificationProviders()` | `string[]|null` | `null` (all registered providers) | Codes of the `NotificationProvider` services to use for this workflow |
 
 ### Configuring the Email provider
 

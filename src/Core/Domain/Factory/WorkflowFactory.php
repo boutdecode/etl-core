@@ -11,11 +11,15 @@ interface WorkflowFactory
     /**
      * @param array<string, mixed> $configuration
      * @param array<string, mixed> $stepConfiguration
+     * @param string[]|null $notificationProviders
      */
     public function create(
         string $name,
         array $configuration = [],
         array $stepConfiguration = [],
         ?string $description = null,
+        bool $notifyOnSuccess = false,
+        bool $notifyOnFailure = false,
+        ?array $notificationProviders = null,
     ): Workflow;
 }

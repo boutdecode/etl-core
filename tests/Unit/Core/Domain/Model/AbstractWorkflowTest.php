@@ -49,6 +49,24 @@ class AbstractWorkflowTest extends TestCase
     }
 
     #[Test]
+    public function isNotifyOnSuccessShouldReturnFalseByDefault(): void
+    {
+        $this->assertFalse($this->workflow->isNotifyOnSuccess());
+    }
+
+    #[Test]
+    public function isNotifyOnFailureShouldReturnFalseByDefault(): void
+    {
+        $this->assertFalse($this->workflow->isNotifyOnFailure());
+    }
+
+    #[Test]
+    public function getNotificationProvidersShouldReturnNullByDefault(): void
+    {
+        $this->assertNull($this->workflow->getNotificationProviders());
+    }
+
+    #[Test]
     public function getCreatedAtShouldReturnCreatedDate(): void
     {
         $createdAt = $this->workflow->getCreatedAt();

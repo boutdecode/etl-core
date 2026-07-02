@@ -35,15 +35,13 @@ final readonly class NotificationMiddleware implements Middleware
         $errors = $context->getErrors();
         $status = $errors !== [] ? PipelineHistoryStatusEnum::FAILED : PipelineHistoryStatusEnum::COMPLETED;
 
-        $notificationConfiguration = $this->extractNotificationConfiguration($workflow->getConfiguration());
-
         $shouldNotify = $status === PipelineHistoryStatusEnum::FAILED
-            ? $notificationConfiguration['on_failure']
-            : $notificationConfiguration['on_success'];
+            ? $workflow->isNotifyOnFailure()
+            : $workflow->isNotifyOnSuccess();
 
         if ($shouldNotify) {
             $this->notify(
-                $notificationConfiguration['providers'],
+                $workflow->getNotificationProviders(),
                 new NotificationMessage($workflow, $pipeline, $status, $errors),
                 $context,
             );
@@ -93,24 +91,5 @@ final readonly class NotificationMiddleware implements Middleware
         }
 
         return $providers;
-    }
-
-    /**
-     * @param array<string, mixed> $configuration
-     *
-     * @return array{on_success: bool, on_failure: bool, providers: string[]|null}
-     */
-    private function extractNotificationConfiguration(array $configuration): array
-    {
-        $notifications = $configuration['notifications'] ?? [];
-        $notifications = is_array($notifications) ? $notifications : [];
-
-        $providers = $notifications['providers'] ?? null;
-
-        return [
-            'on_success' => (bool) ($notifications['on_success'] ?? false),
-            'on_failure' => (bool) ($notifications['on_failure'] ?? false),
-            'providers' => is_array($providers) ? array_values(array_filter($providers, 'is_string')) : null,
-        ];
     }
 }

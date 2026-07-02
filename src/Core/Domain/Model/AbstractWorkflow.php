@@ -20,6 +20,15 @@ abstract class AbstractWorkflow implements Workflow
      */
     protected array $configuration;
 
+    protected bool $notifyOnSuccess = false;
+
+    protected bool $notifyOnFailure = false;
+
+    /**
+     * @var string[]|null
+     */
+    protected ?array $notificationProviders = null;
+
     protected \DateTimeImmutable $createdAt;
 
     protected ?\DateTimeImmutable $updatedAt = null;
@@ -48,6 +57,24 @@ abstract class AbstractWorkflow implements Workflow
     public function getConfiguration(): array
     {
         return $this->configuration;
+    }
+
+    public function isNotifyOnSuccess(): bool
+    {
+        return $this->notifyOnSuccess;
+    }
+
+    public function isNotifyOnFailure(): bool
+    {
+        return $this->notifyOnFailure;
+    }
+
+    /**
+     * @return string[]|null
+     */
+    public function getNotificationProviders(): ?array
+    {
+        return $this->notificationProviders;
     }
 
     public function getCreatedAt(): \DateTimeImmutable
