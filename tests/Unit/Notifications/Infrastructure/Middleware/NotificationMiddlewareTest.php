@@ -106,6 +106,34 @@ class NotificationMiddlewareTest extends TestCase
     }
 
     #[Test]
+    #[AllowMockObjectsWithoutExpectations]
+    public function processShouldAttachThePipelineResultToTheNotificationMessage(): void
+    {
+        $pipeline = $this->createPipelineMock(notifyOnSuccess: true);
+
+        $context = new Context('input');
+        $context->setPipeline($pipeline);
+        $context->setResult('step_one', [
+            'records' => 42,
+        ]);
+
+        $provider = $this->createMock(NotificationProvider::class);
+        $provider->expects($this->once())
+            ->method('notify')
+            ->with($this->callback(function (NotificationMessage $message): bool {
+                $this->assertSame([
+                    'records' => 42,
+                ], $message->result);
+
+                return true;
+            }));
+
+        $this->resolver->method('list')->willReturn([$provider]);
+
+        $this->middleware->process($context, fn ($ctx) => $ctx);
+    }
+
+    #[Test]
     public function processShouldNotNotifyOnFailureWhenNotConfigured(): void
     {
         $pipeline = $this->createPipelineMock(notifyOnSuccess: true);

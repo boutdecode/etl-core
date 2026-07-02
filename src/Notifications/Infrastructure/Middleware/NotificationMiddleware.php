@@ -42,7 +42,7 @@ final readonly class NotificationMiddleware implements Middleware
         if ($shouldNotify) {
             $this->notify(
                 $workflow->getNotificationProviders(),
-                new NotificationMessage($workflow, $pipeline, $status, $errors),
+                new NotificationMessage($workflow, $pipeline, $status, $errors, $context->getResult()),
                 $context,
             );
         }

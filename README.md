@@ -1109,6 +1109,16 @@ The bundle can notify external channels when a `Pipeline` run completes. After e
 
 Sending a notification never fails the pipeline: if a provider throws, the error is logged via the `Logger` port and the other providers still run.
 
+`NotificationMessage` fields available to every provider:
+
+| Field | Type | Description |
+|---|---|---|
+| `workflow` | `Workflow` | The workflow definition |
+| `pipeline` | `Pipeline` | The run that just completed (id, name, scheduledAt/startedAt/finishedAt, …) |
+| `status` | `PipelineHistoryStatusEnum` | `COMPLETED` or `FAILED` |
+| `errors` | `array<string, string>` | Step name → error message, when `status` is `FAILED` |
+| `result` | `mixed` | The pipeline's final result (`Context::getResult()`), or `null` if none was produced |
+
 ### Opting in from a `Workflow`
 
 Notification preferences are dedicated fields on `Workflow` (`isNotifyOnSuccess()`, `isNotifyOnFailure()`, `getNotificationProviders()`), set through `WorkflowFactory::create()`:
@@ -1144,6 +1154,8 @@ boutdecode_etl_core:
 
 If `to` is left empty, `EmailNotificationProvider` silently skips sending.
 
+The email is sent as HTML and includes the `Pipeline` details (id, name, scheduled/started/finished timestamps, duration) and the pipeline's result rendered inside a `<pre>` block.
+
 ### Implementing a custom notification provider
 
 1. Implement `NotificationProvider` and tag the class with `#[AsNotificationProvider(code: '...')]`:
@@ -1163,7 +1175,8 @@ final class SlackNotificationProvider implements NotificationProvider
 
     public function notify(NotificationMessage $message): void
     {
-        // … post $message->workflow, $message->status, $message->errors to Slack …
+        // … post $message->workflow, $message->pipeline, $message->status,
+        // $message->errors and $message->result to Slack …
     }
 }
 ```

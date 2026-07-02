@@ -18,6 +18,7 @@ final readonly class NotificationMessage
         public Pipeline $pipeline,
         public PipelineHistoryStatusEnum $status,
         public array $errors = [],
+        public mixed $result = null,
     ) {
     }
 }

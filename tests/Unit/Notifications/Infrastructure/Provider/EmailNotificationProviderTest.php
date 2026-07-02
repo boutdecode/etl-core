@@ -66,9 +66,11 @@ class EmailNotificationProviderTest extends TestCase
         $mailer->expects($this->once())
             ->method('send')
             ->with($this->callback(function (RawMessage $email): bool {
+                $body = (string) $email->getHtmlBody();
+
                 $this->assertInstanceOf(Email::class, $email);
                 $this->assertSame('[ETL] Workflow "daily-import" failed', $email->getSubject());
-                $this->assertStringContainsString('step_one: boom', (string) $email->getTextBody());
+                $this->assertStringContainsString('<li>step_one: boom</li>', $body);
 
                 return true;
             }));
@@ -80,17 +82,88 @@ class EmailNotificationProviderTest extends TestCase
         ]));
     }
 
+    #[Test]
+    public function notifyShouldIncludePipelineInfoInTheEmailBody(): void
+    {
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects($this->once())
+            ->method('send')
+            ->with($this->callback(function (RawMessage $email): bool {
+                $body = (string) $email->getHtmlBody();
+
+                $this->assertStringContainsString('ID: pipeline-42', $body);
+                $this->assertStringContainsString('Name: nightly-run', $body);
+                $this->assertStringContainsString('Scheduled at: 2026-07-02T02:00:00+00:00', $body);
+                $this->assertStringContainsString('Started at: 2026-07-02T03:00:00+00:00', $body);
+                $this->assertStringContainsString('Finished at: 2026-07-02T03:00:05+00:00', $body);
+                $this->assertStringContainsString('Duration: 5000 ms', $body);
+
+                return true;
+            }));
+
+        $provider = new EmailNotificationProvider($mailer, 'from@example.com', ['to@example.com']);
+
+        $provider->notify($this->createMessage(PipelineHistoryStatusEnum::COMPLETED));
+    }
+
+    #[Test]
+    public function notifyShouldIncludeThePipelineResultInAPreTag(): void
+    {
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects($this->once())
+            ->method('send')
+            ->with($this->callback(function (RawMessage $email): bool {
+                $body = (string) $email->getHtmlBody();
+
+                $this->assertMatchesRegularExpression('#<pre>.*&quot;records&quot;: 42.*</pre>#s', $body);
+
+                return true;
+            }));
+
+        $provider = new EmailNotificationProvider($mailer, 'from@example.com', ['to@example.com']);
+
+        $provider->notify($this->createMessage(PipelineHistoryStatusEnum::COMPLETED, [], [
+            'records' => 42,
+        ]));
+    }
+
+    #[Test]
+    #[AllowMockObjectsWithoutExpectations]
+    public function notifyShouldRenderNaInThePreTagWhenNoResult(): void
+    {
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects($this->once())
+            ->method('send')
+            ->with($this->callback(function (RawMessage $email): bool {
+                $this->assertStringContainsString('<pre>n/a</pre>', (string) $email->getHtmlBody());
+
+                return true;
+            }));
+
+        $provider = new EmailNotificationProvider($mailer, 'from@example.com', ['to@example.com']);
+
+        $provider->notify($this->createMessage(PipelineHistoryStatusEnum::COMPLETED));
+    }
+
     /**
      * @param array<string, string> $errors
      */
-    private function createMessage(PipelineHistoryStatusEnum $status, array $errors = []): NotificationMessage
-    {
+    private function createMessage(
+        PipelineHistoryStatusEnum $status,
+        array $errors = [],
+        mixed $result = null,
+    ): NotificationMessage {
         $workflow = $this->createMock(Workflow::class);
         $workflow->method('getName')->willReturn('daily-import');
 
         $pipeline = $this->createMock(Pipeline::class);
         $pipeline->method('getWorkflow')->willReturn($workflow);
+        $pipeline->method('getId')->willReturn('pipeline-42');
+        $pipeline->method('getName')->willReturn('nightly-run');
+        $pipeline->method('getScheduledAt')->willReturn(new \DateTimeImmutable('2026-07-02T02:00:00+00:00'));
+        $pipeline->method('getStartedAt')->willReturn(new \DateTimeImmutable('2026-07-02T03:00:00+00:00'));
+        $pipeline->method('getFinishedAt')->willReturn(new \DateTimeImmutable('2026-07-02T03:00:05+00:00'));
 
-        return new NotificationMessage($workflow, $pipeline, $status, $errors);
+        return new NotificationMessage($workflow, $pipeline, $status, $errors, $result);
     }
 }

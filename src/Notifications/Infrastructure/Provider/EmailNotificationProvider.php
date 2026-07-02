@@ -42,26 +42,77 @@ final readonly class EmailNotificationProvider implements NotificationProvider
             ->from($this->from)
             ->to(...$this->to)
             ->subject(sprintf('%s Workflow "%s" %s', $this->subjectPrefix, $message->workflow->getName(), $outcome))
-            ->text($this->buildBody($message));
+            ->html($this->buildBody($message));
 
         $this->mailer->send($email);
     }
 
     private function buildBody(NotificationMessage $message): string
     {
-        $lines = [
-            sprintf('Workflow: %s', $message->workflow->getName()),
-            sprintf('Status: %s', $message->status->value),
-        ];
+        $pipeline = $message->pipeline;
 
-        if ($message->errors !== []) {
-            $lines[] = '';
-            $lines[] = 'Errors:';
-            foreach ($message->errors as $step => $error) {
-                $lines[] = sprintf('- %s: %s', $step, $error);
-            }
+        $html = sprintf('<p>Workflow: <strong>%s</strong><br>', htmlspecialchars($message->workflow->getName()));
+        $html .= sprintf('Status: %s</p>', htmlspecialchars($message->status->value));
+
+        $html .= '<p>Pipeline:<br>';
+        $html .= sprintf('ID: %s<br>', htmlspecialchars($pipeline->getId()));
+
+        if ($pipeline->getName() !== null) {
+            $html .= sprintf('Name: %s<br>', htmlspecialchars($pipeline->getName()));
         }
 
-        return implode("\n", $lines);
+        $html .= sprintf('Scheduled at: %s<br>', htmlspecialchars($this->formatDate($pipeline->getScheduledAt())));
+        $html .= sprintf('Started at: %s<br>', htmlspecialchars($this->formatDate($pipeline->getStartedAt())));
+        $html .= sprintf('Finished at: %s', htmlspecialchars($this->formatDate($pipeline->getFinishedAt())));
+
+        $durationMs = $this->computeDurationMs($pipeline->getStartedAt(), $pipeline->getFinishedAt());
+        if ($durationMs !== null) {
+            $html .= sprintf('<br>Duration: %d ms', $durationMs);
+        }
+
+        $html .= '</p>';
+
+        $html .= sprintf('<p>Result:</p><pre>%s</pre>', htmlspecialchars($this->formatResult($message->result)));
+
+        if ($message->errors !== []) {
+            $html .= '<p>Errors:</p><ul>';
+            foreach ($message->errors as $step => $error) {
+                $html .= sprintf('<li>%s: %s</li>', htmlspecialchars($step), htmlspecialchars($error));
+            }
+            $html .= '</ul>';
+        }
+
+        return $html;
+    }
+
+    private function formatResult(mixed $result): string
+    {
+        if ($result === null) {
+            return 'n/a';
+        }
+
+        if (is_string($result)) {
+            return $result;
+        }
+
+        if (is_scalar($result)) {
+            return (string) $result;
+        }
+
+        return (string) json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    private function formatDate(?\DateTimeImmutable $date): string
+    {
+        return $date?->format('c') ?? 'n/a';
+    }
+
+    private function computeDurationMs(?\DateTimeImmutable $startedAt, ?\DateTimeImmutable $finishedAt): ?int
+    {
+        if ($startedAt === null || $finishedAt === null) {
+            return null;
+        }
+
+        return (int) round(((float) $finishedAt->format('U.u') - (float) $startedAt->format('U.u')) * 1000);
     }
 }
