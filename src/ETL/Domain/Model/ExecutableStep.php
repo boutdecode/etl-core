@@ -14,10 +14,17 @@ interface ExecutableStep extends Step
      */
     public function getConfigurationDescription(): array;
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getConfigurationSchema(): array;
+
     public function setName(string $name): void;
 
     /**
      * @param array<string, mixed> $configuration
+     *
+     * @throws \BoutDeCode\ETLCoreBundle\ETL\Domain\Exception\InvalidStepConfigurationException
      */
     public function setConfiguration(array $configuration): void;
 

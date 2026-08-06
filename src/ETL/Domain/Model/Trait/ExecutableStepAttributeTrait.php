@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\ETL\Domain\Model\Trait;
 
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Attribute\AsExecutableStep;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Exception\InvalidStepConfigurationException;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Validator\ConfigurationSchemaValidator;
 
 /**
  * Provides default implementations of {@see \BoutDeCode\ETLCoreBundle\ETL\Domain\Model\ExecutableStep}
@@ -13,9 +15,12 @@ use BoutDeCode\ETLCoreBundle\ETL\Domain\Attribute\AsExecutableStep;
  * When the attribute is present:
  *  - {@see getCode()}                    returns {@see AsExecutableStep::$code}
  *  - {@see getConfigurationDescription()} returns {@see AsExecutableStep::$configurationDescription}
+ *  - {@see getConfigurationSchema()}      returns {@see AsExecutableStep::$configurationSchema}
+ *  - {@see setConfiguration()}            validates the given configuration against
+ *                                         {@see AsExecutableStep::$configurationSchema} when it is not empty
  *
  * When the attribute is absent the trait falls back to the `$code` protected property
- * (for backward compatibility) and returns an empty array for the configuration description.
+ * (for backward compatibility) and returns an empty array for the configuration description and schema.
  */
 trait ExecutableStepAttributeTrait
 {
@@ -57,9 +62,17 @@ trait ExecutableStepAttributeTrait
 
     /**
      * @param array<string, mixed> $configuration
+     *
+     * @throws InvalidStepConfigurationException
      */
     public function setConfiguration(array $configuration): void
     {
+        $schema = $this->getConfigurationSchema();
+
+        if ($schema !== []) {
+            (new ConfigurationSchemaValidator())->validate($this->getCode(), $configuration, $schema);
+        }
+
         $this->configuration = $configuration;
     }
 
@@ -81,6 +94,16 @@ trait ExecutableStepAttributeTrait
         $attribute = $this->resolveAttribute();
 
         return $attribute !== null ? $attribute->configurationDescription : [];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getConfigurationSchema(): array
+    {
+        $attribute = $this->resolveAttribute();
+
+        return $attribute !== null ? $attribute->configurationSchema : [];
     }
 
     private function resolveAttribute(): ?AsExecutableStep

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Loader;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Exception\InvalidStepConfigurationException;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractLoaderStep;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Loader\XmlFileLoadStep;
 use PHPUnit\Framework\Attributes\Test;
@@ -55,6 +56,29 @@ class XmlFileLoadStepTest extends TestCase
         $this->assertArrayHasKey('recordNode', $description);
         $this->assertArrayHasKey('encoding', $description);
         $this->assertArrayHasKey('version', $description);
+    }
+
+    #[Test]
+    public function getConfigurationSchemaShouldReturnExpectedKeys(): void
+    {
+        $schema = $this->loadStep->getConfigurationSchema();
+
+        $this->assertIsArray($schema);
+        $this->assertArrayHasKey('destination', $schema);
+        $this->assertArrayHasKey('rootNode', $schema);
+        $this->assertArrayHasKey('recordNode', $schema);
+        $this->assertArrayHasKey('encoding', $schema);
+        $this->assertArrayHasKey('version', $schema);
+    }
+
+    #[Test]
+    public function setConfigurationShouldThrowExceptionForInvalidType(): void
+    {
+        $this->expectException(InvalidStepConfigurationException::class);
+
+        $this->loadStep->setConfiguration([
+            'encoding' => 123,
+        ]);
     }
 
     #[Test]

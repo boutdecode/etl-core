@@ -20,6 +20,23 @@ use function Flow\ETL\DSL\to_array;
         'enclosure' => 'Field enclosure character (default: \'"\')',
         'escape' => 'Escape character (default: "\\\\")',
     ],
+    configurationSchema: [
+        'source' => [
+            'type' => 'string',
+        ],
+        'delimiter' => [
+            'type' => 'string',
+        ],
+        'hasHeader' => [
+            'type' => 'boolean',
+        ],
+        'enclosure' => [
+            'type' => 'string',
+        ],
+        'escape' => [
+            'type' => 'string',
+        ],
+    ],
 )]
 class CsvFileExtractStep extends AbstractExtractorStep
 {

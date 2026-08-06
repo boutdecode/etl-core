@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Loader;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Exception\InvalidStepConfigurationException;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractLoaderStep;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Loader\CsvFileLoadStep;
 use PHPUnit\Framework\Attributes\Test;
@@ -55,6 +56,29 @@ class CsvFileLoadStepTest extends TestCase
         $this->assertArrayHasKey('withHeader', $description);
         $this->assertArrayHasKey('enclosure', $description);
         $this->assertArrayHasKey('escape', $description);
+    }
+
+    #[Test]
+    public function getConfigurationSchemaShouldReturnExpectedKeys(): void
+    {
+        $schema = $this->loadStep->getConfigurationSchema();
+
+        $this->assertIsArray($schema);
+        $this->assertArrayHasKey('destination', $schema);
+        $this->assertArrayHasKey('delimiter', $schema);
+        $this->assertArrayHasKey('withHeader', $schema);
+        $this->assertArrayHasKey('enclosure', $schema);
+        $this->assertArrayHasKey('escape', $schema);
+    }
+
+    #[Test]
+    public function setConfigurationShouldThrowExceptionForInvalidType(): void
+    {
+        $this->expectException(InvalidStepConfigurationException::class);
+
+        $this->loadStep->setConfiguration([
+            'withHeader' => 'not_a_bool',
+        ]);
     }
 
     #[Test]

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Extractor;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Exception\InvalidStepConfigurationException;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExtractorStep;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Extractor\JsonFileExtractStep;
 use PHPUnit\Framework\Attributes\Test;
@@ -45,6 +46,26 @@ class JsonFileExtractStepTest extends TestCase
         $this->assertIsArray($description);
         $this->assertArrayHasKey('source', $description);
         $this->assertArrayHasKey('pointer', $description);
+    }
+
+    #[Test]
+    public function getConfigurationSchemaShouldReturnExpectedKeys(): void
+    {
+        $schema = $this->extractStep->getConfigurationSchema();
+
+        $this->assertIsArray($schema);
+        $this->assertArrayHasKey('source', $schema);
+        $this->assertArrayHasKey('pointer', $schema);
+    }
+
+    #[Test]
+    public function setConfigurationShouldThrowExceptionForInvalidType(): void
+    {
+        $this->expectException(InvalidStepConfigurationException::class);
+
+        $this->extractStep->setConfiguration([
+            'source' => 123,
+        ]);
     }
 
     #[Test]

@@ -6,6 +6,7 @@ namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Domain\Model\Trait;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Attribute\AsExecutableStep;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Exception\InvalidStepConfigurationException;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExtractorStep;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -45,6 +46,88 @@ class ExecutableStepAttributeTraitTest extends TestCase
         $step = new StepWithoutAttributeFixture();
 
         $this->assertSame([], $step->getConfigurationDescription());
+    }
+
+    #[Test]
+    public function getConfigurationSchemaReturnsSchemaFromAttribute(): void
+    {
+        $step = new StepWithSchemaFixture();
+
+        $this->assertSame([
+            'param_a' => [
+                'type' => 'string',
+                'required' => true,
+            ],
+            'param_b' => [
+                'type' => 'integer',
+            ],
+        ], $step->getConfigurationSchema());
+    }
+
+    #[Test]
+    public function getConfigurationSchemaFallsBackToEmptyArrayWhenNoAttribute(): void
+    {
+        $step = new StepWithoutAttributeFixture();
+
+        $this->assertSame([], $step->getConfigurationSchema());
+    }
+
+    #[Test]
+    public function getConfigurationSchemaFallsBackToEmptyArrayWhenAttributeHasNoSchema(): void
+    {
+        $step = new StepWithAttributeFixture();
+
+        $this->assertSame([], $step->getConfigurationSchema());
+    }
+
+    #[Test]
+    public function setConfigurationAcceptsValidConfigurationAgainstSchema(): void
+    {
+        $step = new StepWithSchemaFixture();
+        $config = [
+            'param_a' => 'value',
+            'param_b' => 42,
+        ];
+
+        $step->setConfiguration($config);
+
+        $this->assertSame($config, $step->getConfiguration());
+    }
+
+    #[Test]
+    public function setConfigurationThrowsExceptionForInvalidType(): void
+    {
+        $step = new StepWithSchemaFixture();
+
+        $this->expectException(InvalidStepConfigurationException::class);
+        $this->expectExceptionMessage('etl.test.schema_step');
+
+        $step->setConfiguration([
+            'param_a' => 123,
+        ]);
+    }
+
+    #[Test]
+    public function setConfigurationThrowsExceptionForMissingRequiredField(): void
+    {
+        $step = new StepWithSchemaFixture();
+
+        $this->expectException(InvalidStepConfigurationException::class);
+
+        $step->setConfiguration([]);
+    }
+
+    #[Test]
+    public function setConfigurationDoesNotValidateWhenSchemaIsEmpty(): void
+    {
+        $step = new StepWithAttributeFixture();
+        $config = [
+            'anything' => 'goes',
+        ];
+
+        $step->setConfiguration($config);
+
+        $this->assertSame($config, $step->getConfiguration());
     }
 
     #[Test]
@@ -138,6 +221,26 @@ class StepWithoutAttributeFixture extends AbstractExtractorStep
 {
     protected string $code = 'etl.test.fallback';
 
+    public function extract(mixed $source, Context $context, array $configuration = []): mixed
+    {
+        return $source;
+    }
+}
+
+#[AsExecutableStep(
+    code: 'etl.test.schema_step',
+    configurationSchema: [
+        'param_a' => [
+            'type' => 'string',
+            'required' => true,
+        ],
+        'param_b' => [
+            'type' => 'integer',
+        ],
+    ],
+)]
+class StepWithSchemaFixture extends AbstractExtractorStep
+{
     public function extract(mixed $source, Context $context, array $configuration = []): mixed
     {
         return $source;

@@ -17,6 +17,23 @@ use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractLoaderStep;
         'encoding' => 'XML document encoding (default: "UTF-8")',
         'version' => 'XML document version (default: "1.0")',
     ],
+    configurationSchema: [
+        'destination' => [
+            'type' => 'string',
+        ],
+        'rootNode' => [
+            'type' => 'string',
+        ],
+        'recordNode' => [
+            'type' => 'string',
+        ],
+        'encoding' => [
+            'type' => 'string',
+        ],
+        'version' => [
+            'type' => 'string',
+        ],
+    ],
 )]
 final class XmlFileLoadStep extends AbstractLoaderStep
 {

@@ -14,6 +14,11 @@ use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
     configurationDescription: [
         'filterExpression' => 'A Symfony Expression Language expression used to filter items. The expression can reference the current item using the variable item.',
     ],
+    configurationSchema: [
+        'filterExpression' => [
+            'type' => 'string',
+        ],
+    ],
 )]
 final class FilterTransformStep extends AbstractTransformerStep
 {

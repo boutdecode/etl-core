@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Loader;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Exception\InvalidStepConfigurationException;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Loader\JsonFileLoadStep;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,6 +33,26 @@ class JsonFileLoadStepTest extends TestCase
     public function getCodeShouldReturnCorrectCode(): void
     {
         $this->assertSame('etl.loader.json_file', $this->loadStep->getCode());
+    }
+
+    #[Test]
+    public function getConfigurationSchemaShouldReturnExpectedKeys(): void
+    {
+        $schema = $this->loadStep->getConfigurationSchema();
+
+        $this->assertIsArray($schema);
+        $this->assertArrayHasKey('destination', $schema);
+        $this->assertArrayHasKey('options', $schema);
+    }
+
+    #[Test]
+    public function setConfigurationShouldThrowExceptionForInvalidType(): void
+    {
+        $this->expectException(InvalidStepConfigurationException::class);
+
+        $this->loadStep->setConfiguration([
+            'options' => 'not_an_integer',
+        ]);
     }
 
     #[Test]

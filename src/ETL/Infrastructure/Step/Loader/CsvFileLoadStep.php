@@ -21,6 +21,23 @@ use function Flow\ETL\DSL\overwrite;
         'enclosure' => 'Field enclosure character (default: \'"\')',
         'escape' => 'Escape character (default: "\\\\")',
     ],
+    configurationSchema: [
+        'destination' => [
+            'type' => 'string',
+        ],
+        'delimiter' => [
+            'type' => 'string',
+        ],
+        'withHeader' => [
+            'type' => 'boolean',
+        ],
+        'enclosure' => [
+            'type' => 'string',
+        ],
+        'escape' => [
+            'type' => 'string',
+        ],
+    ],
 )]
 final class CsvFileLoadStep extends AbstractLoaderStep
 {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Transformer;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Exception\InvalidStepConfigurationException;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractTransformerStep;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Transformer\DataMappingTransformStep;
 use PHPUnit\Framework\Attributes\Test;
@@ -39,6 +40,26 @@ class DataMappingTransformStepTest extends TestCase
         $this->assertIsArray($description);
         $this->assertArrayHasKey('fieldMapping', $description);
         $this->assertArrayHasKey('removeUnmappedFields', $description);
+    }
+
+    #[Test]
+    public function getConfigurationSchemaShouldReturnExpectedKeys(): void
+    {
+        $schema = $this->transformStep->getConfigurationSchema();
+
+        $this->assertIsArray($schema);
+        $this->assertArrayHasKey('fieldMapping', $schema);
+        $this->assertArrayHasKey('removeUnmappedFields', $schema);
+    }
+
+    #[Test]
+    public function setConfigurationShouldThrowExceptionForInvalidType(): void
+    {
+        $this->expectException(InvalidStepConfigurationException::class);
+
+        $this->transformStep->setConfiguration([
+            'removeUnmappedFields' => 'not_a_bool',
+        ]);
     }
 
     #[Test]

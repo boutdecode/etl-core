@@ -17,6 +17,14 @@ use function Flow\ETL\DSL\to_array;
         'source' => 'Path to the JSON file to extract data from',
         'pointer' => 'JSON Pointer (RFC 6901) to a subtree to iterate (optional)',
     ],
+    configurationSchema: [
+        'source' => [
+            'type' => 'string',
+        ],
+        'pointer' => [
+            'type' => 'string',
+        ],
+    ],
 )]
 class JsonFileExtractStep extends AbstractExtractorStep
 {

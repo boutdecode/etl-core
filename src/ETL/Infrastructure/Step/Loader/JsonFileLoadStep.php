@@ -18,6 +18,14 @@ use function Flow\ETL\DSL\overwrite;
         'destination' => 'Path to the JSON file to load data into',
         'options' => 'JSON encoding options (default: 0)',
     ],
+    configurationSchema: [
+        'destination' => [
+            'type' => 'string',
+        ],
+        'options' => [
+            'type' => 'integer',
+        ],
+    ],
 )]
 final class JsonFileLoadStep extends AbstractLoaderStep
 {

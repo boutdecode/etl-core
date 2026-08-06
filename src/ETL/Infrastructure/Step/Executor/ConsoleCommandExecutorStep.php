@@ -18,6 +18,17 @@ use Symfony\Component\Console\Output\BufferedOutput;
         'arguments' => 'Associative array of arguments and options to pass to the command',
         'catchExceptions' => 'Whether the application should catch exceptions (default: false)',
     ],
+    configurationSchema: [
+        'command' => [
+            'type' => 'string',
+        ],
+        'arguments' => [
+            'type' => 'object',
+        ],
+        'catchExceptions' => [
+            'type' => 'boolean',
+        ],
+    ],
 )]
 final class ConsoleCommandExecutorStep extends AbstractExecutorStep
 {

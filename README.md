@@ -576,10 +576,11 @@ src/
 
 ### 1. Declare the step with `#[AsExecutableStep]`
 
-Every step class must carry the `#[AsExecutableStep]` attribute. It serves two purposes:
+Every step class must carry the `#[AsExecutableStep]` attribute. It serves three purposes:
 
 - **`code`** — the unique machine identifier used to resolve the step at runtime (e.g. when a `Workflow` references a step by its code). It must be unique across the whole application.
 - **`configurationDescription`** *(optional)* — a map of configuration key → human-readable description, returned by `getConfigurationDescription()`. Useful for documentation and introspection.
+- **`configurationSchema`** *(optional)* — a map of configuration key → expected shape, returned by `getConfigurationSchema()`. Whenever `setConfiguration()` is called (e.g. by the pipeline runner), the given configuration is validated against this schema and an `InvalidStepConfigurationException` is thrown on mismatch.
 
 ```php
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Attribute\AsExecutableStep;
@@ -591,11 +592,33 @@ use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExtractorStep;
         'source'    => 'Absolute path to the CSV file',
         'delimiter' => 'Field delimiter character (default: ",")',
     ],
+    configurationSchema: [
+        'source'    => ['type' => 'string', 'required' => true],
+        'delimiter' => ['type' => 'string'],
+    ],
 )]
 final class MyCsvExtractorStep extends AbstractExtractorStep
 {
     // …
 }
+```
+
+`configurationSchema` accepts, per field:
+- `type` — one or more of `string`, `number`, `integer`, `boolean`, `array`, `object`, `null`, separated by `|` (e.g. `'string|number'`).
+- `required` *(optional, bool, default `false`)* — throws if the field is absent from the configuration.
+- `properties` *(optional, only with `type: 'array'`)* — a nested schema validated against each element of the array.
+- `schema` *(optional, only with `type: 'object'`)* — a nested schema validated against the value itself.
+
+```php
+configurationSchema: [
+    'foo' => ['type' => 'string|number'],
+    'bar' => ['type' => 'array', 'properties' => [
+        'name' => ['type' => 'string', 'required' => true],
+    ]],
+    'obj' => ['type' => 'object', 'schema' => [
+        'enabled' => ['type' => 'boolean'],
+    ]],
+],
 ```
 
 ### 2. Implement the stage method

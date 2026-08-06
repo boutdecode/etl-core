@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Extractor;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Exception\InvalidStepConfigurationException;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExtractorStep;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Extractor\XmlFileExtractStep;
 use PHPUnit\Framework\Attributes\Test;
@@ -51,6 +52,28 @@ class XmlFileExtractStepTest extends TestCase
         $this->assertArrayHasKey('rootNode', $description);
         $this->assertArrayHasKey('recordNode', $description);
         $this->assertArrayHasKey('useAttributes', $description);
+    }
+
+    #[Test]
+    public function getConfigurationSchemaShouldReturnExpectedKeys(): void
+    {
+        $schema = $this->extractStep->getConfigurationSchema();
+
+        $this->assertIsArray($schema);
+        $this->assertArrayHasKey('source', $schema);
+        $this->assertArrayHasKey('rootNode', $schema);
+        $this->assertArrayHasKey('recordNode', $schema);
+        $this->assertArrayHasKey('useAttributes', $schema);
+    }
+
+    #[Test]
+    public function setConfigurationShouldThrowExceptionForInvalidType(): void
+    {
+        $this->expectException(InvalidStepConfigurationException::class);
+
+        $this->extractStep->setConfiguration([
+            'useAttributes' => 'not_a_bool',
+        ]);
     }
 
     #[Test]

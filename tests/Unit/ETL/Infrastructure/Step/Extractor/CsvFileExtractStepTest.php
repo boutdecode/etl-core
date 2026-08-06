@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Extractor;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Exception\InvalidStepConfigurationException;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Extractor\CsvFileExtractStep;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +32,29 @@ class CsvFileExtractStepTest extends TestCase
     public function getCodeShouldReturnCorrectCode(): void
     {
         $this->assertSame('etl.extractor.csv_file', $this->extractStep->getCode());
+    }
+
+    #[Test]
+    public function getConfigurationSchemaShouldReturnExpectedKeys(): void
+    {
+        $schema = $this->extractStep->getConfigurationSchema();
+
+        $this->assertIsArray($schema);
+        $this->assertArrayHasKey('source', $schema);
+        $this->assertArrayHasKey('delimiter', $schema);
+        $this->assertArrayHasKey('hasHeader', $schema);
+        $this->assertArrayHasKey('enclosure', $schema);
+        $this->assertArrayHasKey('escape', $schema);
+    }
+
+    #[Test]
+    public function setConfigurationShouldThrowExceptionForInvalidType(): void
+    {
+        $this->expectException(InvalidStepConfigurationException::class);
+
+        $this->extractStep->setConfiguration([
+            'delimiter' => 123,
+        ]);
     }
 
     #[Test]

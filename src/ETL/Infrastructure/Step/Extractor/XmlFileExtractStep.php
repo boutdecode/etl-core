@@ -16,6 +16,20 @@ use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExtractorStep;
         'recordNode' => 'The node that represents a single record (default: "record")',
         'useAttributes' => 'Whether to include XML attributes in the extracted data (default: true)',
     ],
+    configurationSchema: [
+        'source' => [
+            'type' => 'string',
+        ],
+        'rootNode' => [
+            'type' => 'string',
+        ],
+        'recordNode' => [
+            'type' => 'string',
+        ],
+        'useAttributes' => [
+            'type' => 'boolean',
+        ],
+    ],
 )]
 class XmlFileExtractStep extends AbstractExtractorStep
 {

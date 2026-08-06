@@ -14,6 +14,14 @@ use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractTransformerStep;
         'fieldMapping' => 'An associative array defining how to map source fields to target fields. It can be a simple mapping (e.g., "old_name" => "new_name") or a complex mapping with transformations (e.g., "old_name" => ["target" => "new_name", "transform" => "upper", "default" => "N/A"])',
         'removeUnmappedFields' => 'Whether to remove fields that are not included in the field mapping (default: false)',
     ],
+    configurationSchema: [
+        'fieldMapping' => [
+            'type' => 'object',
+        ],
+        'removeUnmappedFields' => [
+            'type' => 'boolean',
+        ],
+    ],
 )]
 class DataMappingTransformStep extends AbstractTransformerStep
 {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\ETL\Infrastructure\Step\Executor;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\ETL\Domain\Exception\InvalidStepConfigurationException;
 use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractExecutorStep;
 use BoutDeCode\ETLCoreBundle\ETL\Infrastructure\Step\Executor\ConsoleCommandExecutorStep;
 use PHPUnit\Framework\Attributes\Test;
@@ -35,6 +36,27 @@ class ConsoleCommandExecutorStepTest extends TestCase
     public function stepShouldImplementCorrectInterface(): void
     {
         $this->assertInstanceOf(AbstractExecutorStep::class, $this->executorStep);
+    }
+
+    #[Test]
+    public function getConfigurationSchemaShouldReturnExpectedKeys(): void
+    {
+        $schema = $this->executorStep->getConfigurationSchema();
+
+        $this->assertIsArray($schema);
+        $this->assertArrayHasKey('command', $schema);
+        $this->assertArrayHasKey('arguments', $schema);
+        $this->assertArrayHasKey('catchExceptions', $schema);
+    }
+
+    #[Test]
+    public function setConfigurationShouldThrowExceptionForInvalidType(): void
+    {
+        $this->expectException(InvalidStepConfigurationException::class);
+
+        $this->executorStep->setConfiguration([
+            'command' => 123,
+        ]);
     }
 
     #[Test]
