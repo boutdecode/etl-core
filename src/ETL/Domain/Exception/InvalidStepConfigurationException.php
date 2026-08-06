@@ -28,4 +28,18 @@ final class InvalidStepConfigurationException extends \InvalidArgumentException
             get_debug_type($value),
         ));
     }
+
+    /**
+     * @param array<mixed, mixed> $allowedValues
+     */
+    public static function invalidEnum(string $stepCode, string $field, array $allowedValues, mixed $value): self
+    {
+        return new self(sprintf(
+            'Step "%s": configuration field "%s" must be one of %s, %s given.',
+            $stepCode,
+            $field,
+            json_encode($allowedValues) ?: '[]',
+            json_encode($value) ?: 'null',
+        ));
+    }
 }

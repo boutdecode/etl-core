@@ -13,6 +13,7 @@ use BoutDeCode\ETLCoreBundle\ETL\Domain\Exception\InvalidStepConfigurationExcept
  * Schema DSL: `'field' => ['type' => 'string|number', 'required' => false]`.
  * - `type` accepts one or more of: string, number, integer|int, boolean|bool, array, object, null,
  *   separated by `|`. An unknown type keyword is permissive (never fails).
+ * - `enum`: list of allowed values (strict comparison). Combinable with `type`; both must pass.
  * - `array` + `properties`: nested schema applied to each element of the list.
  * - `object` + `schema`: nested schema applied to the value itself.
  * - Fields missing from the configuration are ignored unless `required` is true.
@@ -73,6 +74,10 @@ final class ConfigurationSchemaValidator
 
         if ($types !== [] && ! $this->matchesAnyType($value, $types)) {
             throw InvalidStepConfigurationException::invalidType($stepCode, $path, $types, $value);
+        }
+
+        if (isset($definition['enum']) && is_array($definition['enum']) && ! in_array($value, $definition['enum'], true)) {
+            throw InvalidStepConfigurationException::invalidEnum($stepCode, $path, $definition['enum'], $value);
         }
 
         if (in_array('array', $types, true) && is_array($value) && isset($definition['properties']) && is_array($definition['properties'])) {

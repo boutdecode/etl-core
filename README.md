@@ -606,12 +606,14 @@ final class MyCsvExtractorStep extends AbstractExtractorStep
 `configurationSchema` accepts, per field:
 - `type` — one or more of `string`, `number`, `integer`, `boolean`, `array`, `object`, `null`, separated by `|` (e.g. `'string|number'`).
 - `required` *(optional, bool, default `false`)* — throws if the field is absent from the configuration.
+- `enum` *(optional, list of allowed values, strict comparison)* — throws if the value isn't one of them. Combinable with `type`; both constraints must pass.
 - `properties` *(optional, only with `type: 'array'`)* — a nested schema validated against each element of the array.
 - `schema` *(optional, only with `type: 'object'`)* — a nested schema validated against the value itself.
 
 ```php
 configurationSchema: [
     'foo' => ['type' => 'string|number'],
+    'mode' => ['type' => 'string', 'enum' => ['append', 'overwrite']],
     'bar' => ['type' => 'array', 'properties' => [
         'name' => ['type' => 'string', 'required' => true],
     ]],

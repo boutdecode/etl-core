@@ -216,6 +216,65 @@ class ConfigurationSchemaValidatorTest extends TestCase
     }
 
     #[Test]
+    public function validatePassesForAllowedEnumValue(): void
+    {
+        $this->validator->validate('test.step', [
+            'mode' => 'append',
+        ], [
+            'mode' => [
+                'type' => 'string',
+                'enum' => ['append', 'overwrite'],
+            ],
+        ]);
+
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function validateThrowsForDisallowedEnumValue(): void
+    {
+        $this->expectException(InvalidStepConfigurationException::class);
+        $this->expectExceptionMessage('field "mode" must be one of ["append","overwrite"]');
+
+        $this->validator->validate('test.step', [
+            'mode' => 'delete',
+        ], [
+            'mode' => [
+                'type' => 'string',
+                'enum' => ['append', 'overwrite'],
+            ],
+        ]);
+    }
+
+    #[Test]
+    public function validateEnumUsesStrictComparison(): void
+    {
+        $this->expectException(InvalidStepConfigurationException::class);
+
+        $this->validator->validate('test.step', [
+            'flag' => '1',
+        ], [
+            'flag' => [
+                'enum' => [1, true],
+            ],
+        ]);
+    }
+
+    #[Test]
+    public function validateEnumWithoutTypeStillChecksAllowedValues(): void
+    {
+        $this->validator->validate('test.step', [
+            'level' => 2,
+        ], [
+            'level' => [
+                'enum' => [1, 2, 3],
+            ],
+        ]);
+
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
     public function validateAcceptsEmptyArrayForArrayOrObjectType(): void
     {
         $this->validator->validate('test.step', [
