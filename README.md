@@ -115,7 +115,20 @@ boutdecode_etl_core:
         enabled: false             # default: false — purge scheduler is opt-in
         retention_days: 30         # default: 30 — pipelines older than N days get purged
         cron_expression: '0 3 * * *'  # default: '0 3 * * *' — when the purge job runs
+    logging:
+        level: info                # default: info — none | error | warning | info | debug
 ```
+
+### Logging verbosity
+
+`logging.level` controls how much the bundle writes to your PSR-3 logger:
+
+| Level | Behaviour |
+|---|---|
+| `none` | Nothing is logged. |
+| `error` / `warning` | Failures only. |
+| `info` (default) | Lifecycle messages with a **summary** of the context (pipeline, step, errors) — no input/result payloads; bus logs contain the command/query name only. |
+| `debug` | Full normalized `Context`, full command/response payloads and exception stack traces (very verbose). |
 
 All other service IDs, tags, and bus names are fixed constants defined by the bundle itself:
 

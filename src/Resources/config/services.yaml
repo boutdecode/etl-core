@@ -112,6 +112,17 @@ services:
             $purgeCronExpression: '%boutdecode_etl_core.purge.cron_expression%'
 
     # -------------------------------------------------------------------------
+    # Logging verbosity
+    # -------------------------------------------------------------------------
+    BoutDeCode\ETLCoreBundle\Run\Infrastructure\Instrumentation\Logger:
+        arguments:
+            $verbosity: '%boutdecode_etl_core.logging.verbosity%'
+
+    BoutDeCode\ETLCoreBundle\CQS\Infrastructure\Instrumentation\Logger:
+        arguments:
+            $verbosity: '%boutdecode_etl_core.logging.verbosity%'
+
+    # -------------------------------------------------------------------------
     # Messenger buses — injected by named autowiring
     # -------------------------------------------------------------------------
     BoutDeCode\ETLCoreBundle\CQS\Infrastructure\Messenger\MessengerCommandBus:

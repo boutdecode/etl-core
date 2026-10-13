@@ -46,6 +46,14 @@ class Configuration implements ConfigurationInterface
             ->end()
             ->end()
             ->end()
+            ->arrayNode('logging')
+            ->addDefaultsIfNotSet()
+            ->children()
+            ->enumNode('level')
+            ->values(['none', 'error', 'warning', 'info', 'debug'])
+            ->defaultValue('info')
+            ->end()
+            ->end()
             ->end()
             ->end();
 

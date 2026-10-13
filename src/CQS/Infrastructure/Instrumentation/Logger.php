@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\CQS\Infrastructure\Instrumentation;
 
+use BoutDeCode\ETLCoreBundle\Core\Domain\Enum\LogVerbosity;
 use BoutDeCode\ETLCoreBundle\CQS\Application\Instrumentation\Logger as InstrumentationLogger;
 use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
@@ -15,7 +17,8 @@ class Logger implements InstrumentationLogger
 
     public function __construct(
         private readonly LoggerInterface $logger,
-        private readonly NormalizerInterface $normalizable
+        private readonly NormalizerInterface $normalizable,
+        private readonly LogVerbosity $verbosity = LogVerbosity::INFO
     ) {
     }
 
@@ -24,6 +27,14 @@ class Logger implements InstrumentationLogger
      */
     public function start(string $chanel, mixed $context, bool $normalize = false): void
     {
+        if (! $this->verbosity->allows(LogLevel::INFO)) {
+            return;
+        }
+
+        if (! $this->verbosity->isDebug()) {
+            $context = [];
+        }
+
         if ($context === null) {
             $context = [];
         }
@@ -43,6 +54,14 @@ class Logger implements InstrumentationLogger
      */
     public function success(string $chanel, mixed $context, bool $normalize = false): void
     {
+        if (! $this->verbosity->allows(LogLevel::INFO)) {
+            return;
+        }
+
+        if (! $this->verbosity->isDebug()) {
+            $context = [];
+        }
+
         if ($context === null) {
             $context = [];
         }
@@ -59,6 +78,10 @@ class Logger implements InstrumentationLogger
 
     public function error(string $chanel, string $reason, array $context = []): void
     {
+        if (! $this->verbosity->allows(LogLevel::ERROR)) {
+            return;
+        }
+
         $this->logger->error(
             sprintf('%s.error', $chanel),
             [

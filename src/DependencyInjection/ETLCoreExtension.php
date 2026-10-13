@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BoutDeCode\ETLCoreBundle\DependencyInjection;
 
+use BoutDeCode\ETLCoreBundle\Core\Domain\Enum\LogVerbosity;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -24,6 +25,8 @@ class ETLCoreExtension extends Extension
         $container->setParameter('boutdecode_etl_core.purge.enabled', $purge['enabled']);
         $container->setParameter('boutdecode_etl_core.purge.retention_days', $purge['retention_days']);
         $container->setParameter('boutdecode_etl_core.purge.cron_expression', $purge['cron_expression']);
+
+        $container->setParameter('boutdecode_etl_core.logging.verbosity', $this->extractLoggingVerbosity($config));
 
         $loader = new YamlFileLoader(
             $container,
@@ -81,5 +84,18 @@ class ETLCoreExtension extends Extension
             'retention_days' => is_int($retentionDays) ? $retentionDays : 30,
             'cron_expression' => is_string($cronExpression) ? $cronExpression : '0 3 * * *',
         ];
+    }
+
+    /**
+     * @param array<array-key, mixed> $config
+     */
+    private function extractLoggingVerbosity(array $config): LogVerbosity
+    {
+        $logging = $config['logging'] ?? [];
+        $logging = is_array($logging) ? $logging : [];
+
+        $level = $logging['level'] ?? null;
+
+        return is_string($level) ? (LogVerbosity::tryFrom($level) ?? LogVerbosity::INFO) : LogVerbosity::INFO;
     }
 }
