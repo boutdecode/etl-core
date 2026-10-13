@@ -57,6 +57,8 @@ services:
             - { name: 'boutdecode_etl_core.pipeline_middleware', priority: -50 }
 
     BoutDeCode\ETLCoreBundle\Statistics\Infrastructure\Middleware\PipelineStatisticMiddleware:
+        arguments:
+            $enabled: '%boutdecode_etl_core.statistics.enabled%'
         tags:
             - { name: 'boutdecode_etl_core.pipeline_middleware', priority: -60 }
 

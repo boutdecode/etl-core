@@ -21,6 +21,7 @@ final readonly class PipelineStatisticMiddleware implements Middleware
         private WorkflowStatisticPersister $workflowStatisticPersister,
         private WorkflowExecutionStatisticFactory $workflowExecutionStatisticFactory,
         private WorkflowExecutionStatisticPersister $workflowExecutionStatisticPersister,
+        private bool $enabled = true,
     ) {
     }
 
@@ -28,7 +29,7 @@ final readonly class PipelineStatisticMiddleware implements Middleware
     {
         $pipeline = $context->getPipeline();
 
-        if ($pipeline === null) {
+        if (! $this->enabled || $pipeline === null) {
             /** @var Context $result */
             $result = $next($context);
 

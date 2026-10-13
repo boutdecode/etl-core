@@ -115,6 +115,8 @@ boutdecode_etl_core:
         enabled: false             # default: false — purge scheduler is opt-in
         retention_days: 30         # default: 30 — pipelines older than N days get purged
         cron_expression: '0 3 * * *'  # default: '0 3 * * *' — when the purge job runs
+    statistics:
+        enabled: true              # default: true — set to false to stop recording workflow statistics
     logging:
         level: info                # default: info — none | error | warning | info | debug
 ```

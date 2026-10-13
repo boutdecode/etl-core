@@ -43,4 +43,24 @@ class ConfigurationTest extends TestCase
             ],
         ]]);
     }
+
+    #[Test]
+    public function statisticsAreEnabledByDefault(): void
+    {
+        $config = (new Processor())->processConfiguration(new Configuration(), []);
+
+        self::assertTrue($config['statistics']['enabled']);
+    }
+
+    #[Test]
+    public function statisticsCanBeDisabled(): void
+    {
+        $config = (new Processor())->processConfiguration(new Configuration(), [[
+            'statistics' => [
+                'enabled' => false,
+            ],
+        ]]);
+
+        self::assertFalse($config['statistics']['enabled']);
+    }
 }

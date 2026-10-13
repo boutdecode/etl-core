@@ -73,6 +73,36 @@ class PipelineStatisticMiddlewareTest extends TestCase
 
     #[Test]
     #[AllowMockObjectsWithoutExpectations]
+    public function processShouldSkipRecordingWhenDisabled(): void
+    {
+        $middleware = new PipelineStatisticMiddleware(
+            $this->provider,
+            $this->factory,
+            $this->persister,
+            $this->executionFactory,
+            $this->executionPersister,
+            false,
+        );
+
+        $context = new Context('input');
+        $context->setPipeline($this->createPipelineMock(new \DateTimeImmutable('-5 seconds')));
+        $nextCalled = false;
+
+        $this->provider->expects($this->never())->method('findByWorkflow');
+        $this->executionPersister->expects($this->never())->method('create');
+
+        $result = $middleware->process($context, function ($ctx) use (&$nextCalled) {
+            $nextCalled = true;
+
+            return $ctx;
+        });
+
+        $this->assertTrue($nextCalled);
+        $this->assertSame($context, $result);
+    }
+
+    #[Test]
+    #[AllowMockObjectsWithoutExpectations]
     public function processShouldCreateStatisticWhenNoneExists(): void
     {
         $pipeline = $this->createPipelineMock(new \DateTimeImmutable('-5 seconds'));

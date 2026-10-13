@@ -26,6 +26,8 @@ class ETLCoreExtension extends Extension
         $container->setParameter('boutdecode_etl_core.purge.retention_days', $purge['retention_days']);
         $container->setParameter('boutdecode_etl_core.purge.cron_expression', $purge['cron_expression']);
 
+        $container->setParameter('boutdecode_etl_core.statistics.enabled', $this->extractStatisticsEnabled($config));
+
         $container->setParameter('boutdecode_etl_core.logging.verbosity', $this->extractLoggingVerbosity($config));
 
         $loader = new YamlFileLoader(
@@ -97,5 +99,18 @@ class ETLCoreExtension extends Extension
         $level = $logging['level'] ?? null;
 
         return is_string($level) ? (LogVerbosity::tryFrom($level) ?? LogVerbosity::INFO) : LogVerbosity::INFO;
+    }
+
+    /**
+     * @param array<array-key, mixed> $config
+     */
+    private function extractStatisticsEnabled(array $config): bool
+    {
+        $statistics = $config['statistics'] ?? [];
+        $statistics = is_array($statistics) ? $statistics : [];
+
+        $enabled = $statistics['enabled'] ?? null;
+
+        return is_bool($enabled) ? $enabled : true;
     }
 }
