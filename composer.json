@@ -12,6 +12,7 @@
         "flow-php/etl": "~0.25.0",
         "flow-php/etl-adapter-csv": "~0.25.0",
         "flow-php/etl-adapter-json": "~0.25.0",
+        "symfony/console": "^6.4 || ^7.0",
         "symfony/expression-language": "^6.4 || ^7.0",
         "symfony/framework-bundle": "^6.4 || ^7.0",
         "symfony/mailer": "^6.4 || ^7.0",
@@ -19,6 +20,7 @@
         "symfony/scheduler": "^6.4 || ^7.0",
         "symfony/serializer": "^6.4 || ^7.0",
         "symfony/workflow": "^6.4 || ^7.0",
+        "symfony/yaml": "^6.4 || ^7.0",
         "webmozart/assert": "^1.11"
     },
     "require-dev": {
@@ -27,7 +29,6 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-symfony": "^2.0",
         "phpunit/phpunit": "^11.0",
-        "symfony/console": "^6.4 || ^7.0",
         "symfony/flex": "^2.10",
         "symplify/easy-coding-standard": "^13.0"
     },
@@ -92,7 +93,8 @@
         "symfony/scheduler": ">=8.0",
         "symfony/serializer": ">=8.0",
         "symfony/validator": ">=8.0",
-        "symfony/workflow": ">=8.0"
+        "symfony/workflow": ">=8.0",
+        "symfony/yaml": ">=8.0"
     },
     "extra": {
         "symfony": {

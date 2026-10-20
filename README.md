@@ -953,6 +953,49 @@ $extracted = $context->getResultByKey('extract_step');
 $errors = $context->getErrors(); // array<string, mixed>
 ```
 
+#### Creating a Workflow from an array (no persistence)
+
+Use `InMemoryWorkflow::fromArray()` to build a one-off Workflow without persisting it, then create a Pipeline from it:
+
+```php
+use BoutDeCode\ETLCoreBundle\Core\Domain\Model\InMemoryWorkflow;
+
+$workflow = InMemoryWorkflow::fromArray([
+    'name' => 'Import customers',
+    'step_configuration' => [
+        ['code' => 'app.extractor.my_csv', 'name' => 'extract_customers', 'order' => 1, 'configuration' => ['source' => '/data/customers.csv']],
+    ],
+    // optional: id, description, configuration, notify_on_success, notify_on_failure, notification_providers
+]);
+
+$pipeline = $this->pipelineFactory->createFromWorkflow($workflow, 'Import customers');
+```
+
+> **Note:** Statistics are not recorded for in-memory workflows. Your `PipelinePersister` must also accept a Pipeline whose Workflow is not stored (e.g. nullable relation, no FK).
+
+### Running a workflow from the CLI
+
+```bash
+# Existing workflow, looked up through WorkflowProvider
+bin/console etl:workflow:execute my-workflow-code
+
+# Workflow described in a YAML or JSON file (built as an InMemoryWorkflow)
+bin/console etl:workflow:execute --file workflow.yaml
+
+# Optional pipeline input, as a JSON object
+bin/console etl:workflow:execute --file workflow.yaml --input '{"foo": "bar"}'
+```
+
+Pass either a workflow code or `--file`, not both. The file uses the keys accepted by `InMemoryWorkflow::fromArray()`:
+
+```yaml
+name: Import customers
+step_configuration:
+  - { code: app.extractor.my_csv, name: extract_customers, order: 1, configuration: { source: /data/customers.csv } }
+```
+
+A Pipeline is created and persisted (through your `PipelinePersister`) in both modes, then run synchronously. A workflow loaded from a file is not persisted. The command exits with a failure code when the pipeline is not executable or when a step reports an error.
+
 ---
 
 ## Adding Custom Middleware

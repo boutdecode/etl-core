@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\Statistics\Infrastructure\Middleware;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Model\InMemoryWorkflow;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Enum\PipelineHistoryStatusEnum;
 use BoutDeCode\ETLCoreBundle\Run\Domain\Middleware\Middleware;
 use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\WorkflowExecutionStatisticPersister;
@@ -29,7 +30,7 @@ final readonly class PipelineStatisticMiddleware implements Middleware
     {
         $pipeline = $context->getPipeline();
 
-        if (! $this->enabled || $pipeline === null) {
+        if (! $this->enabled || $pipeline === null || $pipeline->getWorkflow() instanceof InMemoryWorkflow) {
             /** @var Context $result */
             $result = $next($context);
 

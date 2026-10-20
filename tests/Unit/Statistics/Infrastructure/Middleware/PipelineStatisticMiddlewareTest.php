@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BoutDeCode\ETLCoreBundle\Tests\Unit\Statistics\Infrastructure\Middleware;
 
 use BoutDeCode\ETLCoreBundle\Core\Domain\DTO\Context;
+use BoutDeCode\ETLCoreBundle\Core\Domain\Model\InMemoryWorkflow;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Pipeline;
 use BoutDeCode\ETLCoreBundle\Core\Domain\Model\Workflow;
 use BoutDeCode\ETLCoreBundle\Statistics\Domain\Data\Persister\WorkflowExecutionStatisticPersister;
@@ -92,6 +93,33 @@ class PipelineStatisticMiddlewareTest extends TestCase
         $this->executionPersister->expects($this->never())->method('create');
 
         $result = $middleware->process($context, function ($ctx) use (&$nextCalled) {
+            $nextCalled = true;
+
+            return $ctx;
+        });
+
+        $this->assertTrue($nextCalled);
+        $this->assertSame($context, $result);
+    }
+
+    #[Test]
+    #[AllowMockObjectsWithoutExpectations]
+    public function processShouldSkipRecordingForInMemoryWorkflow(): void
+    {
+        $pipeline = $this->createMock(Pipeline::class);
+        $pipeline->method('getWorkflow')->willReturn(InMemoryWorkflow::fromArray([
+            'name' => 'ephemeral',
+        ]));
+
+        $context = new Context('input');
+        $context->setPipeline($pipeline);
+        $nextCalled = false;
+
+        $this->provider->expects($this->never())->method('findByWorkflow');
+        $this->persister->expects($this->never())->method('create');
+        $this->executionPersister->expects($this->never())->method('create');
+
+        $result = $this->middleware->process($context, function ($ctx) use (&$nextCalled) {
             $nextCalled = true;
 
             return $ctx;
