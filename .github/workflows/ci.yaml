@@ -77,7 +77,7 @@ jobs:
                   coverage: none
 
             - name: Pin Symfony version
-              run: composer require --no-update "symfony/framework-bundle:${{ matrix.symfony }}"
+              run: composer require --no-update "symfony/http-kernel:${{ matrix.symfony }}" "symfony/dependency-injection:${{ matrix.symfony }}"
 
             - name: Install dependencies
               run: composer install --prefer-dist --no-progress --no-interaction --no-plugins
