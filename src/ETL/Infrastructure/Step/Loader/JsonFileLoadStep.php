@@ -10,7 +10,7 @@ use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractLoaderStep;
 use function Flow\ETL\Adapter\JSON\to_json;
 use function Flow\ETL\DSL\data_frame;
 use function Flow\ETL\DSL\from_array;
-use function Flow\ETL\DSL\save_mode_overwrite;
+use function Flow\ETL\DSL\overwrite;
 
 #[AsExecutableStep(
     code: 'etl.loader.json_file',
@@ -50,7 +50,8 @@ final class JsonFileLoadStep extends AbstractLoaderStep
         data_frame()
             ->read(from_array($iterableData))
             ->collect()
-            ->write(to_json($destination, $optionsInt)->saveMode(save_mode_overwrite()))
+            ->mode(overwrite())
+            ->write(to_json($destination, $optionsInt))
             ->run();
 
         return true;

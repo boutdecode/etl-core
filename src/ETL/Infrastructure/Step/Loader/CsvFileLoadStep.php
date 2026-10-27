@@ -10,7 +10,7 @@ use BoutDeCode\ETLCoreBundle\ETL\Domain\Model\AbstractLoaderStep;
 use function Flow\ETL\Adapter\CSV\to_csv;
 use function Flow\ETL\DSL\data_frame;
 use function Flow\ETL\DSL\from_array;
-use function Flow\ETL\DSL\save_mode_overwrite;
+use function Flow\ETL\DSL\overwrite;
 
 #[AsExecutableStep(
     code: 'etl.loader.csv_file',
@@ -74,13 +74,14 @@ final class CsvFileLoadStep extends AbstractLoaderStep
         data_frame()
             ->read(from_array($iterableData))
             ->collect()
+            ->mode(overwrite())
             ->write(to_csv(
                 $destination,
                 with_header: $withHeaderBool,
                 separator: $delimiterStr,
                 enclosure: $enclosureStr,
                 escape: $escapeStr,
-            )->saveMode(save_mode_overwrite()))
+            ))
             ->run();
 
         return true;

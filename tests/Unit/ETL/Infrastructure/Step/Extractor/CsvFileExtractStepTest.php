@@ -72,7 +72,7 @@ class CsvFileExtractStepTest extends TestCase
 
         $this->assertSame('John Doe', $firstRow['name']);
         $this->assertSame('john@example.com', $firstRow['email']);
-        $this->assertSame(30, $firstRow['age']);
+        $this->assertSame('30', $firstRow['age']);
     }
 
     #[Test]
