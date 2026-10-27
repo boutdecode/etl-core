@@ -43,6 +43,8 @@ class CsvFileExtractStep extends AbstractExtractorStep
     public function __construct(
         private readonly string $delimiter = ',',
         private readonly bool $hasHeader = true,
+        private readonly string $enclosure = '"',
+        private readonly string $escape = '\\',
     ) {
     }
 
@@ -66,13 +68,13 @@ class CsvFileExtractStep extends AbstractExtractorStep
 
         $delimiter = $configuration['delimiter'] ?? $this->configuration['delimiter'] ?? $this->delimiter;
         $hasHeader = $configuration['hasHeader'] ?? $this->configuration['hasHeader'] ?? $this->hasHeader;
-        $enclosure = $configuration['enclosure'] ?? '"';
-        $escape = $configuration['escape'] ?? '\\';
+        $enclosure = $configuration['enclosure'] ?? $this->configuration['enclosure'] ?? $this->enclosure;
+        $escape = $configuration['escape'] ?? $this->configuration['escape'] ?? $this->escape;
 
         $delimiterStr = is_string($delimiter) ? $delimiter : $this->delimiter;
         $hasHeaderBool = is_bool($hasHeader) ? $hasHeader : $this->hasHeader;
-        $enclosureStr = is_string($enclosure) ? $enclosure : '"';
-        $escapeStr = is_string($escape) ? $escape : '\\';
+        $enclosureStr = is_string($enclosure) ? $enclosure : $this->enclosure;
+        $escapeStr = is_string($escape) ? $escape : $this->escape;
 
         $result = [];
 

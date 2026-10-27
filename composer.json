@@ -9,9 +9,9 @@
     "require": {
         "php": ">=8.2",
         "dragonmantank/cron-expression": "^3.6",
-        "flow-php/etl": "~0.25.0",
-        "flow-php/etl-adapter-csv": "~0.25.0",
-        "flow-php/etl-adapter-json": "~0.25.0",
+        "flow-php/etl": "~0.46.0",
+        "flow-php/etl-adapter-csv": "~0.46.0",
+        "flow-php/etl-adapter-json": "~0.46.0",
         "psr/log": "^2.0 || ^3.0",
         "symfony/config": "^6.4 || ^7.0",
         "symfony/console": "^6.4 || ^7.0",
