@@ -71,12 +71,12 @@ class Context
 
     public function getResultSet(): mixed
     {
-        return $this->resultSet[$this->getCurrentStep()?->getName()] ?? null;
+        return $this->resultSet[$this->getCurrentStep()?->getName() ?? ''] ?? null;
     }
 
     public function getInputSet(): mixed
     {
-        return $this->inputSet[$this->getCurrentStep()?->getName()] ?? null;
+        return $this->inputSet[$this->getCurrentStep()?->getName() ?? ''] ?? null;
     }
 
     public function getInitialInput(): mixed

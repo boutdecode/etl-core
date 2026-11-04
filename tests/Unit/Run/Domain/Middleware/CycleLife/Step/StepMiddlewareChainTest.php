@@ -38,7 +38,7 @@ class StepMiddlewareChainTest extends TestCase
         $this->assertNotFalse($parent);
 
         $prop = $parent->getProperty('middlewares');
-        $prop->setAccessible(true);
+
         $middlewares = $prop->getValue($chain);
 
         $this->assertCount(4, $middlewares);
@@ -55,7 +55,7 @@ class StepMiddlewareChainTest extends TestCase
         $this->assertNotFalse($parent);
 
         $prop = $parent->getProperty('middlewares');
-        $prop->setAccessible(true);
+
         $middlewares = $prop->getValue($chain);
 
         $this->assertInstanceOf(StepStartMiddleware::class, $middlewares[0]);
@@ -96,7 +96,7 @@ class StepMiddlewareChainTest extends TestCase
         $this->assertNotFalse($parent);
 
         $prop = $parent->getProperty('middlewares');
-        $prop->setAccessible(true);
+
         $middlewares = $prop->getValue($chain);
 
         $this->assertCount(1, $middlewares);

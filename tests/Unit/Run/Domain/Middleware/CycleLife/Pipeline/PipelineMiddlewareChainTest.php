@@ -87,7 +87,7 @@ class PipelineMiddlewareChainTest extends TestCase
         $this->assertNotFalse($parent);
 
         $prop = $parent->getProperty('middlewares');
-        $prop->setAccessible(true);
+
         $middlewares = $prop->getValue($chain);
 
         $this->assertCount(1, $middlewares);
